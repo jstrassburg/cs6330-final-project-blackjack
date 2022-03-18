@@ -1,18 +1,34 @@
-import Cards
+import argparse
+from Games import GamesFactory
 
 
-deck = Cards.Deck()
-print(f"Deck count: {deck.count()}")
+class Program:
+    args = None
+    parser = argparse.ArgumentParser(description="Plays games of Blackjack")
 
-while deck.count() > 0:
-    card = deck.draw()
-    print(f"Drew the {card.face} of {card.suit} with values: {card.face_values()}")
+    @staticmethod
+    def main():
+        program = Program()
+        program.run()
 
-deck.reset_and_shuffle()
-print(f"Deck count: {deck.count()}")
+    def run(self):
+        self.add_arguments_and_parse()
+        print(f"Playing {self.args.games_to_play} games of type {self.args.game_type}")
 
-next_card = deck.peek()
-print(f"Peeked at next card which is the {card.face} of {card.suit}")
+        game = GamesFactory.create(self.args.game_type)
+        print(type(game))
 
-drawn_card = deck.draw()
-print(f"Drew {card.face} of {card.suit}")
+    def add_arguments_and_parse(self):
+        self.parser.add_argument('--games', dest='games_to_play', default=1000,
+                                 help='The number of games to play. Default 1000.')
+        self.parser.add_argument('--game-type', dest='game_type', default='SimplifiedGame', choices=['SimplifiedGame'],
+                                 help='The type of game to play. Default: SimplifiedGame')
+        self.args = self.parser.parse_args()
+
+
+def main():
+    Program.main()
+
+
+if __name__ == "__main__":
+    main()
