@@ -14,7 +14,7 @@ class Suit(Enum):
 
 
 class Face(Enum):
-    Ace = {'name': 'Ace', 'values': [1, 10]}
+    Ace = {'name': 'Ace', 'values': [1, 11]}
     Two = {'name': 'Two', 'values': [2]}
     Three = {'name': 'Three', 'values': [3]}
     Four = {'name': 'Four', 'values': [4]}
