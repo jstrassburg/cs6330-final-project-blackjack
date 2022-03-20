@@ -23,7 +23,7 @@ class GamesFactory:
             raise GameNotImplementedException()
 
 
-class Game:
+class Game(ABC):
     def __init__(self):
         self._player_hand = []
         self._dealer_hand = []
