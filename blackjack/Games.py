@@ -51,17 +51,17 @@ class Game(ABC):
     @staticmethod
     def score_hand(hand: BlackjackHand):
         score = 0
-        aces = [x for x in hand if x == Face.Ace]
-        non_aces = [x for x in hand if x != Face.Ace]
-        score += sum([x.face_values()[0] for x in non_aces])
-        ace_values = [x.face_values() for x in aces]
-        ace_scores = sorted(set(sum([x for x in product(*ace_values)])))  # for 3 aces, this should be [3,13,23,33]
-        ace_scores = [x for x in ace_scores if x <= 21]
-        for ace_score in ace_scores:
-            if (score + ace_score >= 17) and (score + ace_score < 22):
-                # soft_hand = True, future potential enhancement
-                return score + ace_score
-        return score + min(ace_scores)
+        if hand is None:
+            return score
+        score += sum([x.face_values()[0] for x in hand if x.face != Face.Ace])
+        aces = [x for x in hand if x.face == Face.Ace]
+        score += 11 * len(aces)
+        if score > 21:
+            for _ in aces:
+                score -= 10
+                if score <= 21:
+                    return score
+        return score
 
     def set_strategies(self, dealer_strategy: BlackjackStrategy, player_strategy: BlackjackStrategy):
         self._dealer_strategy = dealer_strategy
