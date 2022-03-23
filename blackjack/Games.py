@@ -3,7 +3,7 @@ from blackjack.Cards import Deck, Card, Face
 from enum import Enum
 from itertools import product
 from random import choice
-from blackjack.Strategies import BlackjackStrategy, HitToSeventeenStrategy
+from blackjack.Strategies import BlackjackStrategy, HitToSeventeenStrategy, HitUntilNextCardBust
 
 
 BlackjackHand = list[Card]
@@ -71,7 +71,7 @@ class Game(ABC):
 class SimplifiedGame(Game):
     def __init__(self):
         Game.__init__(self)
-        self.set_strategies(dealer_strategy=HitToSeventeenStrategy(), player_strategy=HitToSeventeenStrategy())
+        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=HitToSeventeenStrategy())
 
     def play(self):
         return choice([Winner.Player, Winner.Dealer])
