@@ -2,7 +2,7 @@ from abc import ABC
 from blackjack.Cards import Deck, Card, Face
 from enum import Enum
 from blackjack.Policy import Action
-from blackjack.Strategies import BlackjackStrategy, HitUntilNextCardBust, FixedPolicyStrategy, QLearningPolicyStrategy
+from blackjack.Strategies import BlackjackStrategy, HitUntilNextCardBust, FixedStrategy, QLearningStrategy
 
 
 BlackjackHand = list[Card]
@@ -43,7 +43,7 @@ class Game(ABC):
 
         # default strategies
         self._dealer_strategy = HitUntilNextCardBust()
-        self._player_strategy = FixedPolicyStrategy()
+        self._player_strategy = FixedStrategy()
 
     def play(self) -> (Winner, int, int):
         while self.take_hit(self._dealer_hand, self._dealer_strategy):
@@ -93,10 +93,10 @@ class Game(ABC):
 class FixedPolicyGame(Game):
     def __init__(self):
         Game.__init__(self)
-        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=FixedPolicyStrategy())
+        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=FixedStrategy())
 
 
 class QLearningPolicyGame(Game):
     def __init__(self):
         Game.__init__(self)
-        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=QLearningPolicyStrategy())
+        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=QLearningStrategy())
