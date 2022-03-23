@@ -1,11 +1,6 @@
 from abc import ABC, abstractmethod
-from enum import Enum
-from blackjack.Cards import Card, Deck
-
-
-class Action(Enum):
-    HIT = 1
-    STAND = 2
+from blackjack.Policy import Action, FixedPolicy
+from blackjack.Cards import Deck
 
 
 class BlackjackStrategy(ABC):
@@ -17,9 +12,9 @@ class BlackjackStrategy(ABC):
 class HitUntilNextCardBust(BlackjackStrategy):
     def evaluate(self, hand_score: int, deck: Deck) -> Action:
         next_card = deck.peek()
-        return Action.HIT if hand_score + next_card.face_values()[0] < 22 else Action.STAND
+        return Action.HIT if hand_score + max(next_card.face_values()) < 22 else Action.STAND
 
 
-class HitToSeventeenStrategy(BlackjackStrategy):
+class FixedPolicyStrategy(BlackjackStrategy):
     def evaluate(self, hand_score: int, deck: Deck = None) -> Action:
-        return Action.HIT if hand_score < 17 else Action.STAND
+        return FixedPolicy[hand_score]

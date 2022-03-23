@@ -1,9 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from blackjack.Cards import Deck, Card, Face
 from enum import Enum
-from itertools import product
-from random import choice
-from blackjack.Strategies import BlackjackStrategy, HitToSeventeenStrategy, HitUntilNextCardBust
+from blackjack.Policy import Action
+from blackjack.Strategies import BlackjackStrategy, HitUntilNextCardBust, FixedPolicyStrategy
 
 
 BlackjackHand = list[Card]
@@ -22,8 +21,8 @@ class Winner(Enum):
 class GamesFactory:
     @staticmethod
     def create(game_class):
-        if game_class == 'SimplifiedGame':
-            return SimplifiedGame()
+        if game_class == 'FixedPolicyGame':
+            return FixedPolicyGame()
         else:
             raise GameNotImplementedException()
 
@@ -41,12 +40,33 @@ class Game(ABC):
         self._dealer_hand.append(self._deck.draw())
 
         # default strategies
-        self._dealer_strategy = HitToSeventeenStrategy
-        self._player_strategy = HitToSeventeenStrategy
+        self._dealer_strategy = HitUntilNextCardBust()
+        self._player_strategy = FixedPolicyStrategy()
 
-    @abstractmethod
-    def play(self):
-        pass
+    def play(self) -> (Winner, int, int):
+        while self.take_hit(self._dealer_hand, self._dealer_strategy):
+            self._dealer_hand.append(self._deck.draw())
+        while self.take_hit(self._player_hand, self._player_strategy):
+            self._player_hand.append(self._deck.draw())
+
+        dealer_score = self.score_hand(self._dealer_hand)
+        player_score = self.score_hand(self._player_hand)
+
+        if player_score > 21:
+            winner = Winner.Dealer  # player bust
+        elif dealer_score > 21:
+            winner = Winner.Player  # dealer bust
+        else:  # push goes to dealer here
+            winner = Winner.Player if player_score > dealer_score else Winner.Dealer
+
+        return winner, dealer_score, player_score
+
+    def take_hit(self, hand: BlackjackHand, strategy: BlackjackStrategy):
+        current_score = self.score_hand(hand)
+        if current_score > 21:
+            return False
+        action = strategy.evaluate(current_score, self._deck)
+        return action == Action.HIT
 
     @staticmethod
     def score_hand(hand: BlackjackHand):
@@ -68,10 +88,7 @@ class Game(ABC):
         self._player_strategy = player_strategy
 
 
-class SimplifiedGame(Game):
+class FixedPolicyGame(Game):
     def __init__(self):
         Game.__init__(self)
-        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=HitToSeventeenStrategy())
-
-    def play(self):
-        return choice([Winner.Player, Winner.Dealer])
+        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=FixedPolicyStrategy())
