@@ -2,7 +2,7 @@ from abc import ABC
 from blackjack.Cards import Deck, Card, Face
 from enum import Enum
 from blackjack.Policy import Action
-from blackjack.Strategies import BlackjackStrategy, HitUntilNextCardBust, FixedPolicyStrategy
+from blackjack.Strategies import BlackjackStrategy, HitUntilNextCardBust, FixedPolicyStrategy, QLearningPolicyStrategy
 
 
 BlackjackHand = list[Card]
@@ -23,6 +23,8 @@ class GamesFactory:
     def create(game_class):
         if game_class == 'FixedPolicyGame':
             return FixedPolicyGame()
+        elif game_class == 'QLearningPolicyGame':
+            return QLearningPolicyGame()
         else:
             raise GameNotImplementedException()
 
@@ -92,3 +94,9 @@ class FixedPolicyGame(Game):
     def __init__(self):
         Game.__init__(self)
         self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=FixedPolicyStrategy())
+
+
+class QLearningPolicyGame(Game):
+    def __init__(self):
+        Game.__init__(self)
+        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=QLearningPolicyStrategy())

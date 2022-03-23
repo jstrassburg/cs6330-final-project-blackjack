@@ -29,3 +29,4 @@ FixedPolicy = {
     20: Action.STAND,
     21: Action.STAND
 }
+

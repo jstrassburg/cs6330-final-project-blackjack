@@ -38,7 +38,7 @@ class Program:
         self.parser.add_argument('--games', dest='games_to_play', default=1000, type=int,
                                  help='The number of games to play. Default 1000.')
         self.parser.add_argument('--game-type', dest='game_type', default='FixedPolicyGame',
-                                 choices=['FixedPolicyGame'],
+                                 choices=['FixedPolicyGame', 'QLearningPolicyGame'],
                                  help='The type of game to play. Default: FixedPolicyGame')
         self.args = self.parser.parse_args()
 
