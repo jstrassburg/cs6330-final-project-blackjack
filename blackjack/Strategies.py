@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from Cards import Card
+from blackjack.Cards import Card
 
 
 class Action(Enum):

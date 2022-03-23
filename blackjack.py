@@ -1,5 +1,5 @@
 import argparse
-from Games import GamesFactory, Winner
+from blackjack.Games import GamesFactory, Winner
 
 
 class Program:
@@ -17,9 +17,9 @@ class Program:
 
         results = dict()
         for game_number in range(self.args.games_to_play):
-            print(f"Playing game number: {game_number}")
             game = GamesFactory.create(self.args.game_type)
             winner = game.play()
+            print(f"Played game number: {game_number}, {winner}")
             results[winner] = results[winner] + 1 if winner in results else 1
 
         print(f"\nResults after {self.args.games_to_play} games of type {self.args.game_type}:")
