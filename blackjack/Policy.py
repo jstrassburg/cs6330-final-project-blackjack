@@ -37,7 +37,7 @@ class QLearningPolicy:
 
     def _init_q_table(self):
         self._q_table = {}
-        for state in range(1, 22):
+        for state in list(range(1, 22)):
             self._q_table[state] = {
                 'Actions': [
                     {
@@ -46,6 +46,15 @@ class QLearningPolicy:
                     },
                     {
                         'Action': Action.HIT,
+                        'Q': 0
+                    }
+                ]
+            }
+        for state in ['WON', 'LOST/BUST']:
+            self._q_table[state] = {
+                'Actions': [
+                    {
+                        'Action': Action.STAND,
                         'Q': 0
                     }
                 ]

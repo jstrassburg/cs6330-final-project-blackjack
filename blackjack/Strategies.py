@@ -21,12 +21,15 @@ class FixedStrategy(BlackjackStrategy):
         return FixedPolicy[hand_score]
 
 
+qlp = QLearningPolicy()
+
+
 class QLearningStrategy(BlackjackStrategy):
     def __init__(self, epsilon_value=0.1, lambda_value=0.1, alpha_value=0.1):
         self._epsilon = epsilon_value
         self._lambda = lambda_value
         self._alpha = alpha_value
-        self._policy = QLearningPolicy()
+        self._policy = qlp
 
     def evaluate(self, hand_score: int, deck: Deck) -> Action:
         if random() < self._epsilon:
