@@ -22,6 +22,7 @@ class Program:
             Winner.Dealer: 0
         }
         for game_number in range(self.args.games_to_play):
+            print(f"Starting game number: {game_number}")
             game = GamesFactory.create(self.args.game_type)
             (winner, dealer_score, player_score) = game.play()
             print(f"Played game number: {game_number}, {winner} - player: {player_score} - dealer: {dealer_score} ")

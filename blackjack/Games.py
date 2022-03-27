@@ -57,7 +57,7 @@ class Game(ABC):
             self._previous_state = self._current_state
             self._player_hand.append(self._deck.draw())
             self._current_state = self.score_hand(self._player_hand)
-            self.update_policy()
+            self.update_policy(Action.HIT)
 
         dealer_score = self.score_hand(self._dealer_hand)
         player_score = self.score_hand(self._player_hand)
@@ -77,11 +77,11 @@ class Game(ABC):
             else:
                 winner = Winner.Dealer
                 self._current_state = 'LOST/BUST'
-        self.update_policy()
+        self.update_policy(Action.STAND)
 
         return winner, dealer_score, player_score
 
-    def update_policy(self):
+    def update_policy(self, previous_action):
         pass
 
     def take_hit(self, hand: BlackjackHand, strategy: BlackjackStrategy):
@@ -122,5 +122,6 @@ class QLearningPolicyGame(Game):
         Game.__init__(self)
         self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=QLearningStrategy())
 
-    def update_policy(self):
-        print(f"\tUpdate policy called: previous state: {self._previous_state} - current state: {self._current_state}.")
+    def update_policy(self, previous_action):
+        print(f"\tUpdate policy called: previous state: {self._previous_state} - "
+              f"current state: {self._current_state} - previous action: {previous_action}.")
