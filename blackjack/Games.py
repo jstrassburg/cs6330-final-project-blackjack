@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from blackjack.Cards import Deck, Card, Face
 from enum import Enum
 from blackjack.Policy import Action
-from blackjack.Strategies import BlackjackStrategy, HitUntilNextCardBust, FixedStrategy, QLearningStrategy
+from blackjack.Strategies import BlackjackStrategy, HitUntilNextCardBust, FixedStrategy, QLearningStrategy, OptimizedStrategy
 
 
 BlackjackHand = list[Card]
@@ -25,6 +25,8 @@ class GamesFactory:
             return FixedPolicyGame()
         elif game_class == 'QLearningPolicyGame':
             return QLearningPolicyGame()
+        elif game_class == 'OptimizedPolicyGame':
+            return OptimizedPolicyGame()
         else:
             raise GameNotImplementedException()
 
@@ -119,3 +121,9 @@ class QLearningPolicyGame(Game):
         print(f"\tUpdate policy called: previous state: {previous_state} - "
               f"action: {action} - resulting state: {resulting_state}.")
         QLearningStrategy(self._player_strategy).update_policy(previous_state, action, resulting_state)
+
+
+class OptimizedPolicyGame(Game):
+    def __init__(self):
+        Game.__init__(self)
+        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=OptimizedStrategy())

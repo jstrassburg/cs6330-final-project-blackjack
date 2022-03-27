@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from blackjack.Policy import Action, FixedPolicy, QLearningPolicy
+from blackjack.Policy import Action, FixedPolicy, QLearningPolicy, OptimizedPolicy
 from blackjack.Cards import Deck
 from random import random, choice
 
@@ -51,3 +51,8 @@ class QLearningStrategy(BlackjackStrategy):
         if state == 'LOST/BUST':
             return -1000
         return state
+
+
+class OptimizedStrategy(BlackjackStrategy):
+    def evaluate(self, hand_score: int, deck: Deck = None) -> Action:
+        return OptimizedPolicy[hand_score]
