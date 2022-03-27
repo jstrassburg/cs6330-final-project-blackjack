@@ -41,10 +41,6 @@ class Game(ABC):
         self._player_hand.append(self._deck.draw())
         self._dealer_hand.append(self._deck.draw())
 
-        # initialize states
-        self._previous_state = None
-        self._current_state = self.score_hand(self._player_hand)
-
         # default strategies
         self._dealer_strategy = HitUntilNextCardBust()
         self._player_strategy = FixedStrategy()
@@ -53,35 +49,32 @@ class Game(ABC):
         while self.take_hit(self._dealer_hand, self._dealer_strategy):
             self._dealer_hand.append(self._deck.draw())
 
-        while self.take_hit(self._player_hand, self._player_strategy):
-            self._previous_state = self._current_state
-            self._player_hand.append(self._deck.draw())
-            self._current_state = self.score_hand(self._player_hand)
-            self.update_policy(Action.HIT)
+        action = None
+        resulting_state = None
+        while action is not Action.STAND and resulting_state != 'LOST/BUST':
+            previous_state = self.determine_current_state(action)
+            action = Action.HIT if self.take_hit(self._player_hand, self._player_strategy) else Action.STAND
+            if action == Action.HIT:
+                self._player_hand.append(self._deck.draw())
+            resulting_state = self.determine_current_state(action)
+            self.update_policy(previous_state, action, resulting_state)
 
         dealer_score = self.score_hand(self._dealer_hand)
         player_score = self.score_hand(self._player_hand)
-
-        self._previous_state = self._current_state
-
-        if player_score > 21:
-            winner = Winner.Dealer  # player bust
-            self._current_state = 'LOST/BUST'
-        elif dealer_score > 21:
-            winner = Winner.Player  # dealer bust
-            self._current_state = 'WON'
-        else:  # push goes to dealer here
-            if player_score > dealer_score:
-                winner = Winner.Player
-                self._current_state = 'WON'
-            else:
-                winner = Winner.Dealer
-                self._current_state = 'LOST/BUST'
-        self.update_policy(Action.STAND)
+        winner = Winner.Player if resulting_state == 'WON' else Winner.Dealer
 
         return winner, dealer_score, player_score
 
-    def update_policy(self, previous_action):
+    def determine_current_state(self, last_action):
+        dealer_score = self.score_hand(self._dealer_hand)
+        player_score = self.score_hand(self._player_hand)
+        if player_score > 21:
+            return 'LOST/BUST'
+        if last_action == Action.STAND:
+            return 'WON' if player_score > dealer_score else 'LOST/BUST'
+        return player_score
+
+    def update_policy(self, previous_state, action, resulting_state):
         pass
 
     def take_hit(self, hand: BlackjackHand, strategy: BlackjackStrategy):
@@ -122,6 +115,7 @@ class QLearningPolicyGame(Game):
         Game.__init__(self)
         self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=QLearningStrategy())
 
-    def update_policy(self, previous_action):
-        print(f"\tUpdate policy called: previous state: {self._previous_state} - "
-              f"current state: {self._current_state} - previous action: {previous_action}.")
+    def update_policy(self, previous_state, action, resulting_state):
+        print(f"\tUpdate policy called: previous state: {previous_state} - "
+              f"action: {action} - resulting state: {resulting_state}.")
+        # TODO: IMPLEMENT
