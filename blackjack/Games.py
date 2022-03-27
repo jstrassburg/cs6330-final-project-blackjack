@@ -118,8 +118,8 @@ class QLearningPolicyGame(Game):
         self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=QLearningStrategy())
 
     def update_policy(self, previous_state, action, resulting_state):
-        print(f"\tUpdate policy called: previous state: {previous_state} - "
-              f"action: {action} - resulting state: {resulting_state}.")
+        # print(f"\tUpdate policy called: previous state: {previous_state} - "
+        #      f"action: {action} - resulting state: {resulting_state}.")
         QLearningStrategy(self._player_strategy).update_policy(previous_state, action, resulting_state)
 
 
