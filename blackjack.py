@@ -1,5 +1,7 @@
 import argparse
-from blackjack.Games import GamesFactory, Game, Winner
+from blackjack.Games import GamesFactory, Winner
+from blackjack.Strategies import qlp
+from pprint import pprint
 
 
 class Program:
@@ -32,6 +34,12 @@ class Program:
         print(f"\nResults after {self.args.games_to_play} games of type {self.args.game_type}:")
         print(f"\tDealer won: {results[Winner.Dealer]}")
         print(f"\tPlayer won: {results[Winner.Player]}")
+
+        if self.args.game_type == 'QLearningPolicyGame':
+            q_table = qlp.get_table()
+            pprint(q_table)
+            for state in range(2, 22):
+                print(f"state: {state} - best action: {qlp.best_action(state)}")
 
         csv.close()
 

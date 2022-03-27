@@ -63,12 +63,24 @@ class QLearningPolicy:
     def possible_actions(self, state):
         return [x['Action'] for x in self._q_table[state]['Actions']]
 
+    def get_highest_q_value(self, state):
+        return max([x['Q'] for x in self._q_table[state]['Actions']])
+
+    def get_q_value(self, state, action: Action):
+        return [x['Q'] for x in self._q_table[state]['Actions'] if x['Action'] == action][0]  # should only be one
+
+    def update_q_value(self, state, action: Action, new_q):
+        [x for x in self._q_table[state]['Actions'] if x['Action'] == action][0]['Q'] = new_q
+
     def best_action(self, state):
         actions = self._q_table[state]['Actions']
-        best_q = 0
+        best_q = float('-inf')
         best_action = actions[0]['Action']
         for action in actions:
             if action['Q'] > best_q:
                 best_q = action['Q']
                 best_action = action['Action']
         return best_action
+
+    def get_table(self):
+        return self._q_table
