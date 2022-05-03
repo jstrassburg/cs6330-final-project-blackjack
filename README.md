@@ -1,2 +1,2 @@
-# cs6330-project-1-reinforcement-learning
+# cs6330-final-project-blackjack
 A Blackjack agent trained via reinforcement learning.
