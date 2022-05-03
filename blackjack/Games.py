@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from blackjack.Cards import Deck, Card, Face
 from enum import Enum
 from blackjack.Policy import Action
-from blackjack.Strategies import BlackjackStrategy, HitUntilNextCardBust, FixedStrategy, QLearningStrategy, OptimizedStrategy
+from blackjack.Strategies import BlackjackStrategy, HitUntilSeventeen, FixedStrategy, QLearningStrategy, OptimizedStrategy
 
 
 BlackjackHand = list[Card]
@@ -44,7 +44,7 @@ class Game(ABC):
         self._dealer_hand.append(self._deck.draw())
 
         # default strategies
-        self._dealer_strategy = HitUntilNextCardBust()
+        self._dealer_strategy = HitUntilSeventeen()
         self._player_strategy = FixedStrategy()
 
     def play(self) -> (Winner, int, int):
@@ -109,13 +109,13 @@ class Game(ABC):
 class FixedPolicyGame(Game):
     def __init__(self):
         Game.__init__(self)
-        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=FixedStrategy())
+        self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=FixedStrategy())
 
 
 class QLearningPolicyGame(Game):
     def __init__(self):
         Game.__init__(self)
-        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=QLearningStrategy())
+        self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=QLearningStrategy())
 
     def update_policy(self, previous_state, action, resulting_state):
         # print(f"\tUpdate policy called: previous state: {previous_state} - "
@@ -126,4 +126,4 @@ class QLearningPolicyGame(Game):
 class OptimizedPolicyGame(Game):
     def __init__(self):
         Game.__init__(self)
-        self.set_strategies(dealer_strategy=HitUntilNextCardBust(), player_strategy=OptimizedStrategy())
+        self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=OptimizedStrategy())

@@ -16,6 +16,11 @@ class HitUntilNextCardBust(BlackjackStrategy):
         return Action.HIT if hand_score + min(next_card.face_values()) < 22 else Action.STAND
 
 
+class HitUntilSeventeen(BlackjackStrategy):
+    def evaluate(self, hand_score: int, deck: Deck) -> Action:
+        return Action.HIT if hand_score < 17 else Action.STAND
+
+
 class FixedStrategy(BlackjackStrategy):
     def evaluate(self, hand_score: int, deck: Deck = None) -> Action:
         return FixedPolicy[hand_score]
