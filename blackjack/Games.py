@@ -101,13 +101,15 @@ class Game(ABC):
             return score
         score += sum([x.face_values()[0] for x in hand if x.face != Face.Ace])
         aces = [x for x in hand if x.face == Face.Ace]
-        score += 11 * len(aces)
+        num_aces = len(num_aces)
+        score += 11 * num_aces
         if score > 21:
-            for _ in aces:
+            for i in range(num_aces):
                 score -= 10
+                aces.pop()
                 if score <= 21:
-                    return score
-        return score
+                    return score, any(aces)
+        return score, any(aces)
 
     def set_strategies(self, dealer_strategy: BlackjackStrategy, player_strategy: BlackjackStrategy):
         self._dealer_strategy = dealer_strategy

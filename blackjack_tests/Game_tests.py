@@ -7,13 +7,13 @@ from blackjack.Games import Game
 class TestGame(unittest.TestCase):
     def test_score_no_hand(self):
         actual = Game.score_hand([])
-        expected = 0
+        expected = 0, False
         self.assertEqual(actual, expected)
 
     def test_score_one_non_ace(self):
         card = Card(Face.Ten, Suit.Hearts)
         actual = Game.score_hand([card])
-        expected = 10
+        expected = 10, False
         self.assertEqual(actual, expected)
 
     def test_score_many_non_aces(self):
@@ -22,13 +22,13 @@ class TestGame(unittest.TestCase):
         card2 = Card(Face.Jack, Suit.Clubs)
         hand = [card0, card1, card2]
         actual = Game.score_hand(hand)
-        expected = 21
+        expected = 21, False
         self.assertEqual(actual, expected)
 
     def test_score_one_ace(self):
         card = Card(Face.Ace, Suit.Diamonds)
         actual = Game.score_hand([card])
-        expected = 11
+        expected = 11, True
         self.assertEqual(actual, expected)
 
     def test_score_bust_ace_if_11(self):
@@ -37,7 +37,7 @@ class TestGame(unittest.TestCase):
         card2 = Card(Face.Jack, Suit.Clubs)
         hand = [card0, card1, card2]
         actual = Game.score_hand(hand)
-        expected = 17
+        expected = 17, False
         self.assertEqual(actual, expected)
 
     def test_bust_hand(self):
@@ -46,7 +46,7 @@ class TestGame(unittest.TestCase):
         card2 = Card(Face.Jack, Suit.Clubs)
         hand = [card0, card1, card2]
         actual = Game.score_hand(hand)
-        expected = 26
+        expected = 26, False
         self.assertEqual(actual, expected)
 
     def test_bust_hand_with_aces(self):
@@ -56,7 +56,7 @@ class TestGame(unittest.TestCase):
         card3 = Card(Face.Jack, Suit.Clubs)
         hand = [card0, card1, card2, card3]
         actual = Game.score_hand(hand)
-        expected = 23
+        expected = 23, False
         self.assertEqual(actual, expected)
 
     def test_many_aces(self):
@@ -66,5 +66,13 @@ class TestGame(unittest.TestCase):
         card3 = Card(Face.Ace, Suit.Diamonds)
         hand = [card0, card1, card2, card3]
         actual = Game.score_hand(hand)
-        expected = 14
+        expected = 14, True
+        self.assertEqual(actual, expected)
+
+    def test_soft_seventeen(self):
+        card0 = Card(Face.Ace, Suit.Hearts)
+        card1 = Card(Face.Six, Suit.Spades)
+        hand = [card0, card1]
+        actual = Game.score_hand(hand)
+        expected = 17, True
         self.assertEqual(actual, expected)
