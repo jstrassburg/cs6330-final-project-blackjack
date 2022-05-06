@@ -57,10 +57,10 @@ class Game(ABC):
             if action == Action.HIT:
                 self._player_hand.append(self._deck.draw())
                 resulting_state = self.determine_current_state(action)
-                if self.score_hand(self._player_hand) > 21:
+                if self.score_hand(self._player_hand)[0] > 21:
                     print('Player BUST')
                     self.update_policy(previous_state, action, 'LOST/BUST')
-                    return Winner.Dealer, 0, self.score_hand(self._player_hand)
+                    return Winner.Dealer, 0, self.score_hand(self._player_hand)[0]
                 self.update_policy(previous_state, action, resulting_state)
 
         while self.take_hit(self._dealer_hand, self._dealer_strategy):
@@ -68,16 +68,16 @@ class Game(ABC):
 
         resulting_state = self.determine_current_state(action)
 
-        dealer_score = self.score_hand(self._dealer_hand)
-        player_score = self.score_hand(self._player_hand)
+        dealer_score, = self.score_hand(self._dealer_hand)
+        player_score, = self.score_hand(self._player_hand)
         winner = Winner.Player if resulting_state == 'WON' else Winner.Dealer
         self.update_policy(previous_state, action, resulting_state)
 
         return winner, dealer_score, player_score
 
     def determine_current_state(self, last_action):
-        dealer_score = self.score_hand(self._dealer_hand)
-        player_score = self.score_hand(self._player_hand)
+        dealer_score, = self.score_hand(self._dealer_hand)
+        player_score, = self.score_hand(self._player_hand)
         if last_action == Action.STAND:
             if dealer_score > 21:
                 return 'WON'
@@ -88,7 +88,7 @@ class Game(ABC):
         pass
 
     def take_hit(self, hand: BlackjackHand, strategy: BlackjackStrategy):
-        current_score = self.score_hand(hand)
+        current_score, = self.score_hand(hand)
         if current_score > 21:
             return False
         action = strategy.evaluate(current_score, self._deck)
