@@ -68,16 +68,16 @@ class Game(ABC):
 
         resulting_state = self.determine_current_state(action)
 
-        dealer_score, = self.score_hand(self._dealer_hand)
-        player_score, = self.score_hand(self._player_hand)
+        dealer_score = self.score_hand(self._dealer_hand)[0]
+        player_score = self.score_hand(self._player_hand)[0]
         winner = Winner.Player if resulting_state == 'WON' else Winner.Dealer
         self.update_policy(previous_state, action, resulting_state)
 
         return winner, dealer_score, player_score
 
     def determine_current_state(self, last_action):
-        dealer_score, = self.score_hand(self._dealer_hand)
-        player_score, = self.score_hand(self._player_hand)
+        dealer_score = self.score_hand(self._dealer_hand)[0]
+        player_score = self.score_hand(self._player_hand)[0]
         if last_action == Action.STAND:
             if dealer_score > 21:
                 return 'WON'
@@ -88,7 +88,7 @@ class Game(ABC):
         pass
 
     def take_hit(self, hand: BlackjackHand, strategy: BlackjackStrategy):
-        current_score, = self.score_hand(hand)
+        current_score = self.score_hand(hand)[0]
         if current_score > 21:
             return False
         action = strategy.evaluate(current_score, self._deck)
@@ -101,7 +101,7 @@ class Game(ABC):
             return score
         score += sum([x.face_values()[0] for x in hand if x.face != Face.Ace])
         aces = [x for x in hand if x.face == Face.Ace]
-        num_aces = len(num_aces)
+        num_aces = len(aces)
         score += 11 * num_aces
         if score > 21:
             for i in range(num_aces):
