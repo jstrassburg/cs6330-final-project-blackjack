@@ -48,31 +48,39 @@ class Game(ABC):
         self._player_strategy = FixedStrategy()
 
     def play(self) -> (Winner, int, int):
-        while self.take_hit(self._dealer_hand, self._dealer_strategy):
-            self._dealer_hand.append(self._deck.draw())
-
         action = None
+        previous_state = None
         resulting_state = None
-        while action is not Action.STAND and resulting_state != 'LOST/BUST':
+        while action is not Action.STAND:
             previous_state = self.determine_current_state(action)
             action = Action.HIT if self.take_hit(self._player_hand, self._player_strategy) else Action.STAND
             if action == Action.HIT:
                 self._player_hand.append(self._deck.draw())
-            resulting_state = self.determine_current_state(action)
-            self.update_policy(previous_state, action, resulting_state)
+                resulting_state = self.determine_current_state(action)
+                if self.score_hand(self._player_hand) > 21:
+                    print('Player BUST')
+                    self.update_policy(previous_state, action, 'LOST/BUST')
+                    return Winner.Dealer, 0, self.score_hand(self._player_hand)
+                self.update_policy(previous_state, action, resulting_state)
+
+        while self.take_hit(self._dealer_hand, self._dealer_strategy):
+            self._dealer_hand.append(self._deck.draw())
+
+        resulting_state = self.determine_current_state(action)
 
         dealer_score = self.score_hand(self._dealer_hand)
         player_score = self.score_hand(self._player_hand)
         winner = Winner.Player if resulting_state == 'WON' else Winner.Dealer
+        self.update_policy(previous_state, action, resulting_state)
 
         return winner, dealer_score, player_score
 
     def determine_current_state(self, last_action):
         dealer_score = self.score_hand(self._dealer_hand)
         player_score = self.score_hand(self._player_hand)
-        if player_score > 21:
-            return 'LOST/BUST'
         if last_action == Action.STAND:
+            if dealer_score > 21:
+                return 'WON'
             return 'WON' if player_score > dealer_score else 'LOST/BUST'
         return player_score
 
