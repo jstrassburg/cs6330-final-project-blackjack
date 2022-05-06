@@ -4,6 +4,8 @@ from enum import Enum
 class Action(Enum):
     HIT = 1
     STAND = 2
+    # DOUBLE_DOWN = 3
+    # SPLIT = 4
 
 
 FixedPolicy = {
