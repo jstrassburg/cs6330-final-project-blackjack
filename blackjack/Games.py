@@ -88,10 +88,10 @@ class Game(ABC):
         pass
 
     def take_hit(self, hand: BlackjackHand, strategy: BlackjackStrategy):
-        current_score = self.score_hand(hand)[0]
+        current_score, is_soft_hand = self.score_hand(hand)
         if current_score > 21:
             return False
-        action = strategy.evaluate(current_score, self._deck)
+        action = strategy.evaluate(current_score, is_soft_hand, self._deck)
         return action == Action.HIT
 
     @staticmethod
