@@ -9,6 +9,10 @@ class BlackjackStrategy(ABC):
     def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         pass
 
+    @abstractmethod
+    def update_policy(self, previous_state, action, resulting_state):
+        pass
+
 
 class HitUntilSeventeen(BlackjackStrategy):
     def __init__(self, hit_soft_seventeen=True):
@@ -20,10 +24,16 @@ class HitUntilSeventeen(BlackjackStrategy):
 
         return Action.HIT if hand_score < 17 else Action.STAND
 
+    def update_policy(self, previous_state, action, resulting_state):
+        pass
+
 
 class FixedStrategy(BlackjackStrategy):
     def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         return FixedPolicy[hand_score]
+
+    def update_policy(self, previous_state, action, resulting_state):
+        pass
 
 
 qlp = QLearningPolicy()
@@ -61,3 +71,6 @@ class QLearningStrategy(BlackjackStrategy):
 class OptimizedStrategy(BlackjackStrategy):
     def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         return OptimizedPolicy[hand_score]
+
+    def update_policy(self, previous_state, action, resulting_state):
+        pass
