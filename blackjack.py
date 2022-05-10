@@ -21,7 +21,8 @@ class Program:
 
         results = {
             Winner.Player: 0,
-            Winner.Dealer: 0
+            Winner.Dealer: 0,
+            Winner.Push: 0
         }
         for game_number in range(self.args.games_to_play):
             print(f"Starting game number: {game_number}")
@@ -34,6 +35,7 @@ class Program:
         print(f"\nResults after {self.args.games_to_play} games of type {self.args.game_type}:")
         print(f"\tDealer won: {results[Winner.Dealer]}")
         print(f"\tPlayer won: {results[Winner.Player]}")
+        print(f"\tPush: {results[Winner.Push]}\n")
 
         if self.args.game_type == 'QLearningPolicyGame':
             # q_table = qlp.get_table()

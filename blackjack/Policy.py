@@ -1,4 +1,5 @@
 from enum import Enum
+from blackjack.States import TerminationStates
 
 
 class Action(Enum):
@@ -52,7 +53,7 @@ class QLearningPolicy:
                     }
                 ]
             }
-        for state in ['WON', 'LOST/BUST']:
+        for state in [TerminationStates.BUST, TerminationStates.LOST, TerminationStates.WON, TerminationStates.PUSH]:
             self._q_table[state] = {
                 'Actions': [
                     {

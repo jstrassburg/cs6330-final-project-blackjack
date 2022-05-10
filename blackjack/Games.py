@@ -5,6 +5,7 @@ from blackjack.Policy import Action
 from blackjack.Strategies import BlackjackStrategy, HitUntilSeventeen, FixedStrategy, QLearningStrategy, OptimizedStrategy
 from blackjack.StrategyTreeBased import TreeBasedStrategy
 from blackjack.StrategyNeuralFitted import NeuralFittedStrategy
+from blackjack.States import TerminationStates
 
 BlackjackHand = list[Card]
 
@@ -14,6 +15,7 @@ class GameNotImplementedException(ValueError):
 
 
 class Winner(Enum):
+    Push = 0
     Dealer = 1
     Player = 2
     DegenerateGambler = 2
@@ -64,9 +66,9 @@ class Game(ABC):
                 print(f"\tHIT and got {drawn_card.face} of {drawn_card.suit}")
                 self._player_hand.append(drawn_card)
                 resulting_state = self.determine_current_state(action)
-                if self.score_hand(self._player_hand)[0] > 21:
+                if resulting_state == TerminationStates.BUST:
                     print('Player BUST')
-                    self.update_policy(previous_state, action, 'LOST/BUST')
+                    self.update_policy(previous_state, action, TerminationStates.BUST)
                     return Winner.Dealer, 0, self.score_hand(self._player_hand)[0]
                 self.update_policy(previous_state, action, resulting_state)
 
@@ -77,18 +79,26 @@ class Game(ABC):
 
         dealer_score = self.score_hand(self._dealer_hand)[0]
         player_score = self.score_hand(self._player_hand)[0]
-        winner = Winner.Player if resulting_state == 'WON' else Winner.Dealer
         self.update_policy(previous_state, action, resulting_state)
+
+        if resulting_state == TerminationStates.PUSH:
+            winner = Winner.Push
+        else:
+            winner = Winner.Player if resulting_state == TerminationStates.WON else Winner.Dealer
 
         return winner, dealer_score, player_score
 
     def determine_current_state(self, last_action):
         dealer_score = self.score_hand(self._dealer_hand)[0]
         player_score = self.score_hand(self._player_hand)[0]
+        if player_score > 21:
+            return TerminationStates.BUST
         if last_action == Action.STAND:
             if dealer_score > 21:
-                return 'WON'
-            return 'WON' if player_score > dealer_score else 'LOST/BUST'
+                return TerminationStates.WON
+            if dealer_score == player_score:
+                return TerminationStates.PUSH
+            return TerminationStates.WON if player_score > dealer_score else TerminationStates.LOST
         return player_score
 
     def update_policy(self, previous_state, action, resulting_state):

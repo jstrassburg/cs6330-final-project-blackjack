@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from blackjack.Policy import Action, FixedPolicy, QLearningPolicy, OptimizedPolicy
 from blackjack.Cards import Card
+from blackjack.States import TerminationStates
 from random import random, choice
 
 
@@ -61,10 +62,12 @@ class QLearningStrategy(BlackjackStrategy):
 
     @staticmethod
     def determine_reward(state):
-        if state == 'WON':
+        if state == TerminationStates.WON:
             return 1000
-        if state == 'LOST/BUST':
+        if state in [TerminationStates.LOST, TerminationStates.BUST]:
             return -1000
+        if state == TerminationStates.PUSH:
+            return 500
         return state
 
 
