@@ -3,7 +3,8 @@ from blackjack.Cards import Deck, Card, Face
 from enum import Enum
 from blackjack.Policy import Action
 from blackjack.Strategies import BlackjackStrategy, HitUntilSeventeen, FixedStrategy, QLearningStrategy, OptimizedStrategy
-
+from blackjack.StrategyTreeBased import TreeBasedStrategy
+from blackjack.StrategyNeuralFitted import NeuralFittedStrategy
 
 BlackjackHand = list[Card]
 
@@ -27,6 +28,10 @@ class GamesFactory:
             return QLearningPolicyGame()
         elif game_class == 'OptimizedPolicyGame':
             return OptimizedPolicyGame()
+        elif game_class == 'NeuralFittedPolicyGame':
+            return NeuralFittedPolicyGame()
+        elif game_class == 'TreeBasedPolicyGame':
+            return TreeBasedPolicyGame()
         else:
             raise GameNotImplementedException()
 
@@ -132,10 +137,32 @@ class QLearningPolicyGame(Game):
     def update_policy(self, previous_state, action, resulting_state):
         print(f"\tUpdate policy called: previous state: {previous_state} - "
               f"action: {action} - resulting state: {resulting_state}.")
-        QLearningStrategy(self._player_strategy).update_policy(previous_state, action, resulting_state)
+        self._player_strategy.update_policy(previous_state, action, resulting_state)
 
 
 class OptimizedPolicyGame(Game):
     def __init__(self):
         Game.__init__(self)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=OptimizedStrategy())
+
+
+class NeuralFittedPolicyGame(Game):
+    def __init__(self):
+        Game.__init__(self)
+        self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=NeuralFittedStrategy())
+
+    def update_policy(self, previous_state, action, resulting_state):
+        print(f"\tUpdate policy called: previous state: {previous_state} - "
+              f"action: {action} - resulting state: {resulting_state}.")
+        self._player_strategy.update_policy(previous_state, action, resulting_state)
+
+
+class TreeBasedPolicyGame(Game):
+    def __init__(self):
+        Game.__init__(self)
+        self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=TreeBasedStrategy())
+
+    def update_policy(self, previous_state, action, resulting_state):
+        print(f"\tUpdate policy called: previous state: {previous_state} - "
+              f"action: {action} - resulting state: {resulting_state}.")
+        self._player_strategy.update_policy(previous_state, action, resulting_state)
