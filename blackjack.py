@@ -26,7 +26,7 @@ class Program:
         }
         for game_number in range(self.args.games_to_play):
             print(f"Starting game number: {game_number}")
-            game = GamesFactory.create(self.args.game_type)
+            game = GamesFactory.create(self.args.game_type, self.args.bet)
             (winner, dealer_score, player_score) = game.play()
             print(f"Played game number: {game_number}, {winner} - player: {player_score} - dealer: {dealer_score}\n")
             csv.write(f"{winner},{dealer_score},{player_score}\n")
@@ -52,6 +52,8 @@ class Program:
                                  choices=['FixedPolicyGame', 'QLearningPolicyGame', 'OptimizedPolicyGame',
                                           'NeuralFittedPolicyGame', 'TreeBasedPolicyGame'],
                                  help='The type of game to play. Default: FixedPolicyGame')
+        self.parser.add_argument('--bet', dest='bet', default=500, type=int,
+                                 help='The bet increment. Default $500')
         self.args = self.parser.parse_args()
 
 

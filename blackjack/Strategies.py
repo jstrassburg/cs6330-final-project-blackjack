@@ -11,7 +11,7 @@ class BlackjackStrategy(ABC):
         pass
 
     @abstractmethod
-    def update_policy(self, previous_state, action, resulting_state):
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass
 
 
@@ -25,7 +25,7 @@ class HitUntilSeventeen(BlackjackStrategy):
 
         return Action.HIT if hand_score < 17 else Action.STAND
 
-    def update_policy(self, previous_state, action, resulting_state):
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass
 
 
@@ -33,7 +33,7 @@ class FixedStrategy(BlackjackStrategy):
     def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         return FixedPolicy[hand_score]
 
-    def update_policy(self, previous_state, action, resulting_state):
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass
 
 
@@ -53,21 +53,21 @@ class QLearningStrategy(BlackjackStrategy):
         else:
             return self._policy.best_action(hand_score)
 
-    def update_policy(self, previous_state, action, resulting_state):
-        reward = self.determine_reward(resulting_state)
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
+        reward = self.determine_reward(resulting_state, bet)
         current_q = self._policy.get_q_value(previous_state, action)
         high_resulting_q = self._policy.get_highest_q_value(resulting_state)
         new_q = (1 - self._alpha) * current_q + self._alpha * (reward + self._lambda * high_resulting_q)
         self._policy.update_q_value(previous_state, action, new_q)
 
     @staticmethod
-    def determine_reward(state):
+    def determine_reward(state, bet: int):
         if state == TerminationStates.WON:
-            return 1000
+            return bet
         if state in [TerminationStates.LOST, TerminationStates.BUST]:
-            return -1000
+            return -bet
         if state == TerminationStates.PUSH:
-            return 500
+            return bet / 2
         return state
 
 
@@ -75,5 +75,5 @@ class OptimizedStrategy(BlackjackStrategy):
     def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         return OptimizedPolicy[hand_score]
 
-    def update_policy(self, previous_state, action, resulting_state):
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass

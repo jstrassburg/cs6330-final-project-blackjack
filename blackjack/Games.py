@@ -23,23 +23,24 @@ class Winner(Enum):
 
 class GamesFactory:
     @staticmethod
-    def create(game_class):
+    def create(game_class, bet: int):
         if game_class == 'FixedPolicyGame':
-            return FixedPolicyGame()
+            return FixedPolicyGame(bet)
         elif game_class == 'QLearningPolicyGame':
-            return QLearningPolicyGame()
+            return QLearningPolicyGame(bet)
         elif game_class == 'OptimizedPolicyGame':
-            return OptimizedPolicyGame()
+            return OptimizedPolicyGame(bet)
         elif game_class == 'NeuralFittedPolicyGame':
-            return NeuralFittedPolicyGame()
+            return NeuralFittedPolicyGame(bet)
         elif game_class == 'TreeBasedPolicyGame':
-            return TreeBasedPolicyGame()
+            return TreeBasedPolicyGame(bet)
         else:
             raise GameNotImplementedException()
 
 
 class Game(ABC):
-    def __init__(self):
+    def __init__(self, bet: int):
+        self._bet = bet
         self._player_hand = BlackjackHand()
         self._dealer_hand = BlackjackHand()
         self._deck = Deck()
@@ -68,9 +69,9 @@ class Game(ABC):
                 resulting_state = self.determine_current_state(action)
                 if resulting_state == TerminationStates.BUST:
                     print('Player BUST')
-                    self.update_policy(previous_state, action, TerminationStates.BUST)
+                    self.update_policy(previous_state, action, TerminationStates.BUST, self._bet)
                     return Winner.Dealer, 0, self.score_hand(self._player_hand)[0]
-                self.update_policy(previous_state, action, resulting_state)
+                self.update_policy(previous_state, action, resulting_state, self._bet)
 
         while self.take_hit(self._dealer_hand, self._dealer_strategy):
             self._dealer_hand.append(self._deck.draw())
@@ -79,7 +80,7 @@ class Game(ABC):
 
         dealer_score = self.score_hand(self._dealer_hand)[0]
         player_score = self.score_hand(self._player_hand)[0]
-        self.update_policy(previous_state, action, resulting_state)
+        self.update_policy(previous_state, action, resulting_state, self._bet)
 
         if resulting_state == TerminationStates.PUSH:
             winner = Winner.Push
@@ -101,7 +102,7 @@ class Game(ABC):
             return TerminationStates.WON if player_score > dealer_score else TerminationStates.LOST
         return player_score
 
-    def update_policy(self, previous_state, action, resulting_state):
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass
 
     def take_hit(self, hand: BlackjackHand, strategy: BlackjackStrategy):
@@ -134,45 +135,45 @@ class Game(ABC):
 
 
 class FixedPolicyGame(Game):
-    def __init__(self):
-        Game.__init__(self)
+    def __init__(self, bet: int):
+        Game.__init__(self, bet)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=FixedStrategy())
 
 
 class QLearningPolicyGame(Game):
-    def __init__(self):
-        Game.__init__(self)
+    def __init__(self, bet: int):
+        Game.__init__(self, bet)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=QLearningStrategy())
 
-    def update_policy(self, previous_state, action, resulting_state):
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
         print(f"\tUpdate policy called: previous state: {previous_state} - "
               f"action: {action} - resulting state: {resulting_state}.")
-        self._player_strategy.update_policy(previous_state, action, resulting_state)
+        self._player_strategy.update_policy(previous_state, action, resulting_state, bet)
 
 
 class OptimizedPolicyGame(Game):
-    def __init__(self):
-        Game.__init__(self)
+    def __init__(self, bet: int):
+        Game.__init__(self, bet)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=OptimizedStrategy())
 
 
 class NeuralFittedPolicyGame(Game):
-    def __init__(self):
-        Game.__init__(self)
+    def __init__(self, bet: int):
+        Game.__init__(self, bet)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=NeuralFittedStrategy())
 
-    def update_policy(self, previous_state, action, resulting_state):
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
         print(f"\tUpdate policy called: previous state: {previous_state} - "
               f"action: {action} - resulting state: {resulting_state}.")
-        self._player_strategy.update_policy(previous_state, action, resulting_state)
+        self._player_strategy.update_policy(previous_state, action, resulting_state, bet)
 
 
 class TreeBasedPolicyGame(Game):
-    def __init__(self):
-        Game.__init__(self)
+    def __init__(self, bet: int):
+        Game.__init__(self, bet)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=TreeBasedStrategy())
 
-    def update_policy(self, previous_state, action, resulting_state):
+    def update_policy(self, previous_state, action, resulting_state, bet: int):
         print(f"\tUpdate policy called: previous state: {previous_state} - "
               f"action: {action} - resulting state: {resulting_state}.")
-        self._player_strategy.update_policy(previous_state, action, resulting_state)
+        self._player_strategy.update_policy(previous_state, action, resulting_state, bet)
