@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from blackjack.Policy import Action, FixedPolicy, QLearningPolicy, OptimizedPolicy
-from blackjack.Cards import Deck, Card
+from blackjack.Cards import Card
 from random import random, choice
 
 
