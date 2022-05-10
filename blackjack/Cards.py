@@ -64,8 +64,3 @@ class Deck:
         if not self._deck:
             raise DeckEmptyException
         return self._deck.pop(0)
-
-    def peek(self) -> Card:
-        if not self._deck:
-            raise DeckEmptyException
-        return self._deck[0]
