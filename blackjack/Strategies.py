@@ -39,7 +39,7 @@ class QLearningStrategy(BlackjackStrategy):
         self._alpha = alpha_value
         self._policy = qlp
 
-    def evaluate(self, hand_score: int, deck: Deck) -> Action:
+    def evaluate(self, hand_score: int, is_soft_hand: bool, deck: Deck) -> Action:
         if random() < self._epsilon:
             return choice(self._policy.possible_actions(hand_score))
         else:
@@ -62,5 +62,5 @@ class QLearningStrategy(BlackjackStrategy):
 
 
 class OptimizedStrategy(BlackjackStrategy):
-    def evaluate(self, hand_score: int, deck: Deck = None) -> Action:
+    def evaluate(self, hand_score: int, is_soft_hand: bool, deck: Deck = None) -> Action:
         return OptimizedPolicy[hand_score]
