@@ -41,7 +41,8 @@ class Game(ABC):
         self._player_hand.append(self._deck.draw())
         self._dealer_hand.append(self._deck.draw())
         self._player_hand.append(self._deck.draw())
-        self._dealer_hand.append(self._deck.draw())
+        self._dealer_show_card = self._deck.draw()
+        self._dealer_hand.append(self._dealer_show_card)
 
         # default strategies
         self._dealer_strategy = HitUntilSeventeen()
@@ -50,12 +51,13 @@ class Game(ABC):
     def play(self) -> (Winner, int, int):
         action = None
         previous_state = None
-        resulting_state = None
         while action is not Action.STAND:
             previous_state = self.determine_current_state(action)
             action = Action.HIT if self.take_hit(self._player_hand, self._player_strategy) else Action.STAND
             if action == Action.HIT:
-                self._player_hand.append(self._deck.draw())
+                drawn_card = self._deck.draw()
+                print(f"\tHIT and got {drawn_card.face} of {drawn_card.suit}")
+                self._player_hand.append(drawn_card)
                 resulting_state = self.determine_current_state(action)
                 if self.score_hand(self._player_hand)[0] > 21:
                     print('Player BUST')
@@ -91,7 +93,7 @@ class Game(ABC):
         current_score, is_soft_hand = self.score_hand(hand)
         if current_score > 21:
             return False
-        action = strategy.evaluate(current_score, is_soft_hand, self._deck)
+        action = strategy.evaluate(current_score, is_soft_hand, self._dealer_show_card)
         return action == Action.HIT
 
     @staticmethod
@@ -128,8 +130,8 @@ class QLearningPolicyGame(Game):
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=QLearningStrategy())
 
     def update_policy(self, previous_state, action, resulting_state):
-        # print(f"\tUpdate policy called: previous state: {previous_state} - "
-        #      f"action: {action} - resulting state: {resulting_state}.")
+        print(f"\tUpdate policy called: previous state: {previous_state} - "
+              f"action: {action} - resulting state: {resulting_state}.")
         QLearningStrategy(self._player_strategy).update_policy(previous_state, action, resulting_state)
 
 
