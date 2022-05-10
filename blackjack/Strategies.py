@@ -11,8 +11,11 @@ class BlackjackStrategy(ABC):
 
 
 class HitUntilSeventeen(BlackjackStrategy):
+    def __init__(self, hit_soft_seventeen=True):
+        self._hit_soft_seventeen = hit_soft_seventeen
+
     def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card = None) -> Action:
-        if hand_score == 17 and is_soft_hand:
+        if hand_score == 17 and is_soft_hand and self._hit_soft_seventeen:
             return Action.HIT
 
         return Action.HIT if hand_score < 17 else Action.STAND
