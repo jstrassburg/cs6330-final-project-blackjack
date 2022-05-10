@@ -59,12 +59,14 @@ class Game(ABC):
     def play(self) -> (Winner, int, int):
         action = None
         previous_state = None
-        while action is not Action.STAND:
+        while action not in [Action.STAND, Action.DOUBLE_DOWN]:
             previous_state = self.determine_current_state(action)
-            action = Action.HIT if self.take_hit(self._player_hand, self._player_strategy) else Action.STAND
-            if action == Action.HIT:
+            action = self.get_action(self._player_hand, self._player_strategy)
+            if action == Action.DOUBLE_DOWN:
+                self._bet *= 2
+            if action in [Action.HIT, Action.DOUBLE_DOWN]:
                 drawn_card = self._deck.draw()
-                print(f"\tHIT and got {drawn_card.face} of {drawn_card.suit}")
+                print(f"\t{action} and got {drawn_card.face} of {drawn_card.suit}")
                 self._player_hand.append(drawn_card)
                 resulting_state = self.determine_current_state(action)
                 if resulting_state == TerminationStates.BUST:
@@ -111,6 +113,13 @@ class Game(ABC):
             return False
         action = strategy.evaluate(current_score, is_soft_hand, self._dealer_show_card)
         return action == Action.HIT
+
+    def get_action(self, hand:BlackjackHand, strategy: BlackjackStrategy):
+        current_score, is_soft_hand = self.score_hand(hand)
+        if current_score > 21:
+            return Action.STAND
+        action = strategy.evaluate(current_score, is_soft_hand, self._dealer_show_card)
+        return action
 
     @staticmethod
     def score_hand(hand: BlackjackHand):

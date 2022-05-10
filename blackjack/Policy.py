@@ -5,7 +5,7 @@ from blackjack.States import TerminationStates
 class Action(Enum):
     HIT = 1
     STAND = 2
-    # DOUBLE_DOWN = 3
+    DOUBLE_DOWN = 3
     # SPLIT = 4
 
 
@@ -40,7 +40,37 @@ class QLearningPolicy:
 
     def _init_q_table(self):
         self._q_table = {}
-        for state in list(range(1, 22)):
+        for state in list(range(1, 10)):
+            self._q_table[state] = {
+                'Actions': [
+                    {
+                        'Action': Action.STAND,
+                        'Q': 0
+                    },
+                    {
+                        'Action': Action.HIT,
+                        'Q': 0
+                    }
+                ]
+            }
+        for state in list(range(10, 12)):
+            self._q_table[state] = {
+                'Actions': [
+                    {
+                        'Action': Action.STAND,
+                        'Q': 0
+                    },
+                    {
+                        'Action': Action.HIT,
+                        'Q': 0
+                    },
+                    {
+                        'Action': Action.DOUBLE_DOWN,
+                        'Q': 0
+                    }
+                ]
+            }
+        for state in list(range(12, 22)):
             self._q_table[state] = {
                 'Actions': [
                     {
