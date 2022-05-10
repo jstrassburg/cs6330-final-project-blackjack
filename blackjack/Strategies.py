@@ -1,23 +1,17 @@
 from abc import ABC, abstractmethod
 from blackjack.Policy import Action, FixedPolicy, QLearningPolicy, OptimizedPolicy
-from blackjack.Cards import Deck
+from blackjack.Cards import Deck, Card
 from random import random, choice
 
 
 class BlackjackStrategy(ABC):
     @abstractmethod
-    def evaluate(self, hand_score: int, is_soft_hand: bool, deck: Deck) -> Action:
+    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         pass
 
 
-class HitUntilNextCardBust(BlackjackStrategy):
-    def evaluate(self, hand_score: int, is_soft_hand: bool, deck: Deck) -> Action:
-        next_card = deck.peek()
-        return Action.HIT if hand_score + min(next_card.face_values()) < 22 else Action.STAND
-
-
 class HitUntilSeventeen(BlackjackStrategy):
-    def evaluate(self, hand_score: int, is_soft_hand: bool, deck: Deck) -> Action:
+    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         if hand_score == 17 and is_soft_hand:
             return Action.HIT
 
@@ -25,7 +19,7 @@ class HitUntilSeventeen(BlackjackStrategy):
 
 
 class FixedStrategy(BlackjackStrategy):
-    def evaluate(self, hand_score: int, is_soft_hand: bool, deck: Deck = None) -> Action:
+    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         return FixedPolicy[hand_score]
 
 
@@ -39,7 +33,7 @@ class QLearningStrategy(BlackjackStrategy):
         self._alpha = alpha_value
         self._policy = qlp
 
-    def evaluate(self, hand_score: int, is_soft_hand: bool, deck: Deck) -> Action:
+    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         if random() < self._epsilon:
             return choice(self._policy.possible_actions(hand_score))
         else:
@@ -62,5 +56,5 @@ class QLearningStrategy(BlackjackStrategy):
 
 
 class OptimizedStrategy(BlackjackStrategy):
-    def evaluate(self, hand_score: int, is_soft_hand: bool, deck: Deck = None) -> Action:
+    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
         return OptimizedPolicy[hand_score]
