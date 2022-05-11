@@ -57,22 +57,40 @@ class Game(ABC):
         self._player_strategy = FixedStrategy()
 
     def play(self) -> (Winner, int, int):
+        # Take a rules structure, if we get that far with this stuff in it:
+        hit_after_double = False
+        double_after_hit = False
+
         action = None
         previous_state = None
-        while action not in [Action.STAND, Action.DOUBLE_DOWN]:
+        initial_player_hand_score = self.score_hand(self._player_hand)
+
+        print(f"\tPlayer has {self._player_hand[0].face.name} and {self._player_hand[1].face.name} "
+              f"for: {initial_player_hand_score[0]}")
+        while action != Action.STAND:
             previous_state = self.determine_current_state(action)
+            previous_action = action
             action = self.get_action(self._player_hand, self._player_strategy)
+
+            # revert to HIT if we've already HIT
+            if previous_action == Action.HIT and action == Action.DOUBLE_DOWN and not double_after_hit:
+                action = Action.HIT
+
+            # double the bet for a DOUBLE_DOWN
             if action == Action.DOUBLE_DOWN:
                 self._bet *= 2
+
             if action in [Action.HIT, Action.DOUBLE_DOWN]:
                 drawn_card = self._deck.draw()
-                print(f"\t{action} and got {drawn_card.face} of {drawn_card.suit}")
+                print(f"\t{action} and got {drawn_card.face.name} of {drawn_card.suit.name}")
                 self._player_hand.append(drawn_card)
                 resulting_state = self.determine_current_state(action)
                 if resulting_state == TerminationStates.BUST:
                     print('Player BUST')
                     self.update_policy(previous_state, action, TerminationStates.BUST, self._bet)
                     return Winner.Dealer, 0, self.score_hand(self._player_hand)[0]
+                if action == Action.DOUBLE_DOWN and not hit_after_double:
+                    break
                 self.update_policy(previous_state, action, resulting_state, self._bet)
 
         while self.take_hit(self._dealer_hand, self._dealer_strategy):
@@ -96,7 +114,7 @@ class Game(ABC):
         player_score = self.score_hand(self._player_hand)[0]
         if player_score > 21:
             return TerminationStates.BUST
-        if last_action == Action.STAND:
+        if last_action in [Action.STAND, Action.DOUBLE_DOWN]:
             if dealer_score > 21:
                 return TerminationStates.WON
             if dealer_score == player_score:
