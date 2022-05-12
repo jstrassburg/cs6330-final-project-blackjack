@@ -2,12 +2,13 @@ from abc import ABC, abstractmethod
 from blackjack.Cards import Deck, Card, Face
 from enum import Enum
 from blackjack.Policy import Action
-from blackjack.Strategies import BlackjackStrategy, HitUntilSeventeen, FixedStrategy, QLearningStrategy, OptimizedStrategy, BlackjackExperience
+from blackjack.Strategies import BlackjackStrategy, HitUntilSeventeen, FixedStrategy, QLearningStrategy, OptimizedStrategy, BlackjackState
 from blackjack.StrategyTreeBased import TreeBasedStrategy
 from blackjack.StrategyNeuralFitted import NeuralFittedStrategy
 from blackjack.States import TerminationStates
 
 BlackjackHand = list[Card]
+
 
 class GameNotImplementedException(ValueError):
     pass
@@ -128,7 +129,7 @@ class Game(ABC):
         current_score, is_soft_hand = self.score_hand(hand)
         if current_score > 21:
             return Action.STAND
-        action = strategy.evaluate(BlackjackExperience(current_score, is_soft_hand, self._dealer_show_card))
+        action = strategy.evaluate(BlackjackState(current_score, is_soft_hand, self._dealer_show_card))
         return action
 
     @staticmethod
