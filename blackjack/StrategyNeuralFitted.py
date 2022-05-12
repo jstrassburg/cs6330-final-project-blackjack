@@ -37,8 +37,11 @@ class NeuralFittedStrategy(BlackjackStrategy):
         if random() < self._epsilon:
             return choice(legal_move_filter(game_state))
         else:
+            legal_actions = legal_move_filter(game_state)
             q_values = self._model.predict(game_state)
-            return Action(np.argmax(q_values[0]))
+            sorted_recommended_actions = np.argsort(q_values[0])
+            best_legal_action = [x for x in sorted_recommended_actions if x in legal_actions][-1]
+            return best_legal_action
 
     def update_policy(self, experience: BlackjackExperience):
         reward = self.determine_reward(experience.last_state, experience.bet)
