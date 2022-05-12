@@ -5,9 +5,16 @@ from blackjack.States import TerminationStates
 from random import random, choice
 
 
+class BlackjackExperience:
+    def __init__(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card):
+        self.hand_score = hand_score
+        self.is_soft_hand = is_soft_hand
+        self.dealer_show_card = dealer_show_card
+
+
 class BlackjackStrategy(ABC):
     @abstractmethod
-    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
+    def evaluate(self, experience: BlackjackExperience) -> Action:
         pass
 
     @abstractmethod
@@ -19,19 +26,19 @@ class HitUntilSeventeen(BlackjackStrategy):
     def __init__(self, hit_soft_seventeen=True):
         self._hit_soft_seventeen = hit_soft_seventeen
 
-    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card = None) -> Action:
-        if hand_score == 17 and is_soft_hand and self._hit_soft_seventeen:
+    def evaluate(self, experience: BlackjackExperience) -> Action:
+        if experience.hand_score == 17 and experience.is_soft_hand and self._hit_soft_seventeen:
             return Action.HIT
 
-        return Action.HIT if hand_score < 17 else Action.STAND
+        return Action.HIT if experience.hand_score < 17 else Action.STAND
 
     def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass
 
 
 class FixedStrategy(BlackjackStrategy):
-    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
-        return FixedPolicy[hand_score]
+    def evaluate(self, experience: BlackjackExperience) -> Action:
+        return FixedPolicy[experience.hand_score]
 
     def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass
@@ -47,11 +54,11 @@ class QLearningStrategy(BlackjackStrategy):
         self._alpha = alpha_value
         self._policy = qlp
 
-    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
+    def evaluate(self, experience: BlackjackExperience) -> Action:
         if random() < self._epsilon:
-            return choice(self._policy.possible_actions(hand_score))
+            return choice(self._policy.possible_actions(experience.hand_score))
         else:
-            return self._policy.best_action(hand_score)
+            return self._policy.best_action(experience.hand_score)
 
     def update_policy(self, previous_state, action, resulting_state, bet: int):
         reward = self.determine_reward(resulting_state, bet)
@@ -72,8 +79,8 @@ class QLearningStrategy(BlackjackStrategy):
 
 
 class OptimizedStrategy(BlackjackStrategy):
-    def evaluate(self, hand_score: int, is_soft_hand: bool, dealer_show_card: Card) -> Action:
-        return OptimizedPolicy[hand_score]
+    def evaluate(self, experience: BlackjackExperience) -> Action:
+        return OptimizedPolicy[experience.hand_score]
 
     def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass
