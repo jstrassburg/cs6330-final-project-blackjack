@@ -3,10 +3,10 @@ from blackjack.States import TerminationStates
 
 
 class Action(Enum):
-    HIT = 1
-    STAND = 2
-    DOUBLE_DOWN = 3
-    # SPLIT = 4
+    HIT = 0
+    STAND = 1
+    DOUBLE_DOWN = 2
+    # SPLIT = 3
 
 
 FixedPolicy = {
