@@ -2,6 +2,8 @@ from blackjack.Strategies import BlackjackStrategy, BlackjackState
 from blackjack.Cards import Card
 from blackjack.Policy import Action
 from random import random, choice
+import numpy as np
+from collections import deque
 
 # the .python might need to be removed at runtime
 # it fixes code completion, however, due to:
@@ -23,21 +25,21 @@ model = keras.models.Sequential([
 
 
 class NeuralFittedStrategy(BlackjackStrategy):
-    def __init__(self, epsilon_value=0.1):
+    def __init__(self, epsilon_value=0.1, batch_size=50):
         self._epsilon = epsilon_value
+        self._batch_size = batch_size
         self._model = model
+        self._experience_buffer = deque(maxlen=1000)
 
     def evaluate(self, game_state: BlackjackState) -> Action:
         if random() < self._epsilon:
             return choice(self._possible_actions(game_state))
         else:
-            return self._best_action(game_state)
+            q_values = self._model.predict(game_state)
+            return Action(np.argmax(q_values[0]))
 
     def update_policy(self, previous_state, action, resulting_state, bet: int):
         pass
 
     def _possible_actions(self, game_state: BlackjackState):
         return list(Action)
-
-    def _best_action(self, game_state: BlackjackState):
-        return Action.STAND
