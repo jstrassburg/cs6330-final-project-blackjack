@@ -1,8 +1,6 @@
-from abc import ABC, abstractmethod
-from blackjack.Cards import Deck, Card, Face
+from blackjack.Cards import Deck, Face
 from enum import Enum
-from blackjack.Policy import Action
-from blackjack.Strategies import BlackjackStrategy, HitUntilSeventeen, FixedStrategy, QLearningStrategy, OptimizedStrategy, BlackjackState
+from blackjack.Strategies import *
 from blackjack.StrategyTreeBased import TreeBasedStrategy
 from blackjack.StrategyNeuralFitted import NeuralFittedStrategy
 from blackjack.States import TerminationStates
@@ -60,20 +58,20 @@ class Game(ABC):
         # Take a rules structure, if we get that far with this stuff in it:
         hit_after_double = False
         double_after_hit = False
-
         action = None
-        previous_state = None
-        initial_player_hand_score = self.score_hand(self._player_hand)
 
+        initial_player_hand_score = self.score_hand(self._player_hand)
         print(f"\tPlayer has {self._player_hand[0].face.name} and {self._player_hand[1].face.name} "
-              f"for: {initial_player_hand_score[0]}")
+              f"for: {'soft ' if initial_player_hand_score[1] else ''}{initial_player_hand_score[0]}")
+
+        last_player_hand = self._player_hand.copy()
         while action != Action.STAND:
-            previous_state = self.determine_current_state(action)
-            previous_action = action
+            last_player_hand = self._player_hand.copy()
+            last_action = action
             action = self.get_action(self._player_hand, self._player_strategy)
 
             # revert to HIT if we've already HIT
-            if previous_action == Action.HIT and action == Action.DOUBLE_DOWN and not double_after_hit:
+            if last_action == Action.HIT and action == Action.DOUBLE_DOWN and not double_after_hit:
                 action = Action.HIT
 
             # double the bet for a DOUBLE_DOWN
@@ -84,32 +82,32 @@ class Game(ABC):
                 drawn_card = self._deck.draw()
                 print(f"\t{action} and got {drawn_card.face.name} of {drawn_card.suit.name}")
                 self._player_hand.append(drawn_card)
-                resulting_state = self.determine_current_state(action)
-                if resulting_state == TerminationStates.BUST:
+                resulting_hand_state = self.determine_current_hand_state(action)
+                if resulting_hand_state == TerminationStates.BUST:
                     print('Player BUST')
-                    self.update_policy(previous_state, action, TerminationStates.BUST, self._bet)
+                    self.update_policy(last_player_hand, action, self._bet)
                     return Winner.Dealer, 0, self.score_hand(self._player_hand)[0]
                 if action == Action.DOUBLE_DOWN and not hit_after_double:
                     break
-                self.update_policy(previous_state, action, resulting_state, self._bet)
+                self.update_policy(last_player_hand, action, self._bet)
 
         while self.get_action(self._dealer_hand, self._dealer_strategy) == Action.HIT:
             self._dealer_hand.append(self._deck.draw())
 
-        resulting_state = self.determine_current_state(action)
+        resulting_hand_state = self.determine_current_hand_state(action)
 
         dealer_score = self.score_hand(self._dealer_hand)[0]
         player_score = self.score_hand(self._player_hand)[0]
-        self.update_policy(previous_state, action, resulting_state, self._bet)
+        self.update_policy(last_player_hand, action, self._bet)
 
-        if resulting_state == TerminationStates.PUSH:
+        if resulting_hand_state == TerminationStates.PUSH:
             winner = Winner.Push
         else:
-            winner = Winner.Player if resulting_state == TerminationStates.WON else Winner.Dealer
+            winner = Winner.Player if resulting_hand_state == TerminationStates.WON else Winner.Dealer
 
         return winner, dealer_score, player_score
 
-    def determine_current_state(self, last_action):
+    def determine_current_hand_state(self, last_action):
         dealer_score = self.score_hand(self._dealer_hand)[0]
         player_score = self.score_hand(self._player_hand)[0]
         if player_score > 21:
@@ -122,8 +120,19 @@ class Game(ABC):
             return TerminationStates.WON if player_score > dealer_score else TerminationStates.LOST
         return player_score
 
-    def update_policy(self, previous_state, action, resulting_state, bet: int):
-        pass
+    def update_policy(self, last_hand: BlackjackHand, action: Action, bet: int):
+        last_hand_state, last_is_soft = self.score_hand(last_hand)
+        resulting_hand_state = self.determine_current_hand_state(action)
+        resulting_hand_score, resulting_is_soft = self.score_hand(self._player_hand)
+
+        last_state = BlackjackState(last_hand_state, last_is_soft, self._dealer_show_card)
+        resulting_state = BlackjackState(resulting_hand_state, resulting_is_soft, self._dealer_show_card)
+
+        experience = BlackjackExperience(last_state, action, resulting_state, bet)
+
+        print(f"\tUpdate policy called: last hand state: {last_hand_state} - "
+              f"action: {action} - resulting state: {resulting_hand_state}.")
+        self._player_strategy.update_policy(experience)
 
     def get_action(self, hand: BlackjackHand, strategy: BlackjackStrategy):
         current_score, is_soft_hand = self.score_hand(hand)
@@ -165,11 +174,6 @@ class QLearningPolicyGame(Game):
         Game.__init__(self, bet)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=QLearningStrategy())
 
-    def update_policy(self, previous_state, action, resulting_state, bet: int):
-        print(f"\tUpdate policy called: previous state: {previous_state} - "
-              f"action: {action} - resulting state: {resulting_state}.")
-        self._player_strategy.update_policy(previous_state, action, resulting_state, bet)
-
 
 class OptimizedPolicyGame(Game):
     def __init__(self, bet: int):
@@ -182,18 +186,8 @@ class NeuralFittedPolicyGame(Game):
         Game.__init__(self, bet)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=NeuralFittedStrategy())
 
-    def update_policy(self, previous_state, action, resulting_state, bet: int):
-        print(f"\tUpdate policy called: previous state: {previous_state} - "
-              f"action: {action} - resulting state: {resulting_state}.")
-        self._player_strategy.update_policy(previous_state, action, resulting_state, bet)
-
 
 class TreeBasedPolicyGame(Game):
     def __init__(self, bet: int):
         Game.__init__(self, bet)
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=TreeBasedStrategy())
-
-    def update_policy(self, previous_state, action, resulting_state, bet: int):
-        print(f"\tUpdate policy called: previous state: {previous_state} - "
-              f"action: {action} - resulting state: {resulting_state}.")
-        self._player_strategy.update_policy(previous_state, action, resulting_state, bet)
