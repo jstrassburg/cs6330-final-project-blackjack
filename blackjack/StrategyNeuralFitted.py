@@ -1,6 +1,7 @@
 from blackjack.Strategies import BlackjackStrategy, BlackjackState, BlackjackExperience
 from blackjack.Policy import Action
 from blackjack.States import TerminationStates
+from blackjack.Filters import legal_move_filter
 from random import random, choice, sample
 import numpy as np
 from collections import deque
@@ -34,7 +35,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
 
     def evaluate(self, game_state: BlackjackState) -> Action:
         if random() < self._epsilon:
-            return choice(self._possible_actions(game_state))
+            return choice(legal_move_filter(game_state))
         else:
             q_values = self._model.predict(game_state)
             return Action(np.argmax(q_values[0]))
@@ -43,14 +44,12 @@ class NeuralFittedStrategy(BlackjackStrategy):
         reward = self.determine_reward(experience.last_state, experience.bet)
         NeuralFittedStrategy._experience_buffer.append((experience, reward))
 
-    def _possible_actions(self, game_state: BlackjackState):
-        return list(Action)
-
     def _experience_replay(self):
         if len(NeuralFittedStrategy._experience_buffer) < self._batch_size:
             print(f"Not enough experiences to sample a batch size of: {self._batch_size}")
             return
         random_sample = sample(NeuralFittedStrategy._experience_buffer, self._batch_size)
+        # TODO: Train network
 
     @staticmethod
     def determine_reward(hand_state, bet: int):
