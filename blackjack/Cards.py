@@ -40,6 +40,10 @@ class Card:
     def name(self):
         return self.face.value['name']
 
+    def __int__(self):
+        max_face_value = max(self.face_values())
+        return max_face_value
+
 
 class Deck:
     def __init__(self):
