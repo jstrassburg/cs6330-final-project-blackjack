@@ -59,6 +59,13 @@ class NeuralFittedStrategy(BlackjackStrategy):
         random_sample = sample(NeuralFittedStrategy._experience_buffer, self._batch_size)
         experiences = np.array([random_sample[0] for _ in random_sample])
         rewards = np.array([random_sample[1] for _ in random_sample])
+        last_states = np.array([experience.last_state for experience in experiences])
+        resulting_states = np.array([experience.resulting_state for experience in experiences])
+        input_states = [[x.hand_state, int(x.is_soft_hand), int(x.dealer_show_card)] for x in resulting_states]
+        resulting_q_values = NeuralFittedStrategy._model.predict(input_states)
+        # TODO: mask off the legal moves
+        resulting_max_q_values = np.max(resulting_q_values, axis=1)
+        
         # TODO: Train network
 
     @staticmethod
@@ -70,4 +77,3 @@ class NeuralFittedStrategy(BlackjackStrategy):
         if hand_state == TerminationStates.PUSH:
             return bet / 2
         return hand_state
-
