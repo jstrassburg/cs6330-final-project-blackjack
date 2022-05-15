@@ -3,6 +3,7 @@ from blackjack.Policy import Action, FixedPolicy, QLearningPolicy, OptimizedPoli
 from blackjack.Cards import Card
 from blackjack.States import TerminationStates
 from random import random, choice
+import numpy as np
 
 
 class BlackjackState:
@@ -10,6 +11,9 @@ class BlackjackState:
         self.hand_state = hand_state  # This is either the hand score or a TerminationState - refactor later?
         self.is_soft_hand = is_soft_hand
         self.dealer_show_card = dealer_show_card
+
+    def to_array(self) -> np.array:
+        return np.array([float(self.hand_state), float(self.is_soft_hand), float(self.dealer_show_card)])[np.newaxis, :]
 
 
 class BlackjackExperience:

@@ -44,6 +44,10 @@ class Card:
         max_face_value = max(self.face_values())
         return max_face_value
 
+    def __float__(self):
+        max_face_value = max(self.face_values())
+        return float(max_face_value)
+
 
 class Deck:
     def __init__(self):
