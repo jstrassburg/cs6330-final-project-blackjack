@@ -1,12 +1,11 @@
-from blackjack.Cards import Deck, Face, Card
+from blackjack.Cards import Deck, Face
 from enum import Enum
 from blackjack.Strategies import *
 from blackjack.StrategyTreeBased import TreeBasedStrategy
 from blackjack.StrategyNeuralFitted import NeuralFittedStrategy
 from blackjack.States import TerminationStates
-from typing import List
 
-BlackjackHand = List[Card]
+BlackjackHand = list[Card]
 
 
 class GameNotImplementedException(ValueError):
