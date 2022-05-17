@@ -10,3 +10,9 @@ class TerminationStates(Enum):
     @classmethod
     def has_value(cls, value):
         return value in cls._value2member_map_
+
+    def __int__(self):
+        return self.value
+
+    def __float__(self):
+        return float(self.value)

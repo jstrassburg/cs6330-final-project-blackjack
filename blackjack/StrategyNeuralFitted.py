@@ -58,15 +58,17 @@ class NeuralFittedStrategy(BlackjackStrategy):
         if len(NeuralFittedStrategy._experience_buffer) < self._batch_size:
             print(f"Not enough experiences to sample a batch size of: {self._batch_size}")
             return
-        random_sample = sample(NeuralFittedStrategy._experience_buffer, self._batch_size)
-        experiences = np.array([random_sample[0] for _ in random_sample])
-        rewards = np.array([random_sample[1] for _ in random_sample])
+        random_samples = sample(NeuralFittedStrategy._experience_buffer, self._batch_size)
+        experiences = np.array([random_sample[0] for random_sample in random_samples])
+        rewards = np.array([random_sample[1] for random_sample in random_samples])
 
         # It would be nice to not loop through the experiences four times, later.
         actions = np.array([experience.action for experience in experiences])
         output_states = np.array([experience.resulting_state.to_array() for experience in experiences])
         input_states = np.array([experience.last_state.to_array() for experience in experiences])
-        is_dones = np.array([TerminationStates.has_value(int(experience.hand_state)) for experience in experiences])
+        is_dones = np.array([
+            TerminationStates.has_value(int(experience.resulting_state.hand_state)) for experience in experiences
+        ])
 
         resulting_q_values = NeuralFittedStrategy._model.predict(output_states)
         # TODO: mask off the legal moves
