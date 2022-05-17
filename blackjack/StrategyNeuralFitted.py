@@ -45,7 +45,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
         else:
             legal_actions = legal_move_filter(game_state)
             inputs = game_state.to_array()
-            q_values = self._model.predict(inputs)
+            q_values = self._model.predict(inputs[np.newaxis])
             sorted_recommended_actions = np.argsort(q_values[0])
             best_legal_action = [x for x in sorted_recommended_actions if x in legal_actions][-1]
             return Action(best_legal_action)
@@ -72,6 +72,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
 
         resulting_q_values = NeuralFittedStrategy._model.predict(output_states)
         # TODO: mask off the legal moves
+        # TODO: perhaps remove the is_dones as the game is done when it is done
         resulting_max_q_values = np.max(resulting_q_values, axis=1)
         target_q_values = (rewards + (1 - is_dones) * discount_factor * resulting_max_q_values)
         target_q_values = target_q_values.reshape(-1, 1)

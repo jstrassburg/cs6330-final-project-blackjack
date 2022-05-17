@@ -13,7 +13,7 @@ class BlackjackState:
         self.dealer_show_card = dealer_show_card
 
     def to_array(self) -> np.array:
-        return np.array([float(self.hand_state), float(self.is_soft_hand), float(self.dealer_show_card)])[np.newaxis, :]
+        return np.array([float(self.hand_state), float(self.is_soft_hand), float(self.dealer_show_card)])
 
 
 class BlackjackExperience:
