@@ -8,6 +8,12 @@ class Action(Enum):
     DOUBLE_DOWN = 2
     # SPLIT = 3
 
+    def __int__(self):
+        return self.value
+
+    def __float__(self):
+        return float(self.value)
+
 
 FixedPolicy = {
     1: Action.HIT,

@@ -14,7 +14,7 @@ import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Nadam
 from tensorflow.keras.losses import mean_squared_error
 
 num_inputs = len(BlackjackState(0, False, Card(Face.Ace, Suit.Clubs)).__dict__)
@@ -41,7 +41,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
 
     def evaluate(self, game_state: BlackjackState) -> Action:
         if random() < self._epsilon:
-            return choice(legal_move_filter(game_state))
+            return Action(choice(legal_move_filter(game_state)))
         else:
             legal_actions = legal_move_filter(game_state)
             inputs = game_state.to_array()
@@ -54,7 +54,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
         reward = self.determine_reward(experience.last_state.hand_state, experience.bet)
         NeuralFittedStrategy._experience_buffer.append((experience, reward))
 
-    def _experience_replay(self, discount_factor=0.95, optimizer=Adam, loss_fn=mean_squared_error):
+    def _experience_replay(self, discount_factor=0.95, optimizer=Nadam(learning_rate=1e-2), loss_fn=mean_squared_error):
         if len(NeuralFittedStrategy._experience_buffer) < self._batch_size:
             print(f"Not enough experiences to sample a batch size of: {self._batch_size}")
             return
@@ -63,7 +63,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
         rewards = np.array([random_sample[1] for random_sample in random_samples])
 
         # It would be nice to not loop through the experiences four times, later.
-        actions = np.array([experience.action for experience in experiences])
+        actions = np.array([int(experience.action) for experience in experiences])
         output_states = np.array([experience.resulting_state.to_array() for experience in experiences])
         input_states = np.array([experience.last_state.to_array() for experience in experiences])
         is_dones = np.array([
@@ -78,13 +78,11 @@ class NeuralFittedStrategy(BlackjackStrategy):
         target_q_values = target_q_values.reshape(-1, 1)
         mask = tf.one_hot(actions, num_outputs)
         with tf.GradientTape() as tape:
-            all_q_values = NeuralFittedStrategy._model(input_states[0:3])
+            all_q_values = NeuralFittedStrategy._model(input_states)
             q_values = tf.reduce_sum(all_q_values * mask, axis=1, keepdims=True)
             loss = tf.reduce_mean(loss_fn(target_q_values, q_values))
         grads = tape.gradient(loss, NeuralFittedStrategy._model.trainable_variables)
         optimizer.apply_gradients(zip(grads, NeuralFittedStrategy._model.trainable_variables))
-
-        # TODO: Train network
 
     @staticmethod
     def determine_reward(hand_state, bet: int):
