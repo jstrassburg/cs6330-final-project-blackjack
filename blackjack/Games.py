@@ -2,7 +2,6 @@ from blackjack.Cards import Deck, Face
 from enum import Enum
 from blackjack.Strategies import *
 from blackjack.StrategyTreeBased import TreeBasedStrategy
-from blackjack.StrategyNeuralFitted import NeuralFittedStrategy
 from blackjack.States import TerminationStates
 
 BlackjackHand = list[Card]
@@ -184,6 +183,7 @@ class OptimizedPolicyGame(Game):
 class NeuralFittedPolicyGame(Game):
     def __init__(self, bet: int):
         Game.__init__(self, bet)
+        from blackjack.StrategyNeuralFitted import NeuralFittedStrategy
         self.set_strategies(dealer_strategy=HitUntilSeventeen(), player_strategy=NeuralFittedStrategy())
 
 

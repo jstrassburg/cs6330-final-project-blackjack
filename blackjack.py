@@ -1,5 +1,4 @@
 import argparse
-from blackjack.Games import GamesFactory, Winner
 from blackjack.Strategies import qlp
 from pprint import pprint
 
@@ -15,6 +14,7 @@ class Program:
 
     def run(self):
         self.add_arguments_and_parse()
+        from blackjack.Games import GamesFactory, Winner
         print(f"Playing {self.args.games_to_play} games of type {self.args.game_type}...")
         csv = open(f"{self.args.game_type}.csv", 'w')
         csv.write('winner,dealer_score,player_score\n')
