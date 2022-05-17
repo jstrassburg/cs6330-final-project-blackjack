@@ -2,6 +2,8 @@ import argparse
 from blackjack.Strategies import qlp
 from pprint import pprint
 
+from blackjack.StrategyTreeBased import TreeBasedStrategy
+
 
 class Program:
     args = None
@@ -47,6 +49,8 @@ class Program:
             # pprint(q_table)
             for state in range(2, 22):
                 print(f"state: {state} - best action: {qlp.best_action(state)}")
+        # elif self.args.game_type == 'TreeBasedPolicyGame':
+        #     TreeBasedStrategy.print_policy()
 
         csv.close()
 
