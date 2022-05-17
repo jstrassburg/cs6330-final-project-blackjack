@@ -2,10 +2,10 @@ from enum import Enum
 
 
 class TerminationStates(Enum):
-    WON = 1000
-    LOST = 1001
-    BUST = 1002
-    PUSH = 1003
+    WON = 22
+    LOST = 23
+    BUST = 24
+    PUSH = 25
 
     @classmethod
     def has_value(cls, value):

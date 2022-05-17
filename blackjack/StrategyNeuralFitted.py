@@ -13,12 +13,16 @@ from collections import deque
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Nadam
-from tensorflow.keras.losses import mean_squared_error
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import SGD, RMSprop, Adam, Nadam
+from tensorflow.keras.losses import mean_squared_error, mean_absolute_error
 
 num_inputs = len(BlackjackState(0, False, Card(Face.Ace, Suit.Clubs)).__dict__)
 num_outputs = len(Action)
+
+EXPL_MAX = 1.0
+EXPL_MIN = 0.05
+EXPL_DECAY = 0.96
 
 
 class NeuralFittedStrategy(BlackjackStrategy):
@@ -26,35 +30,43 @@ class NeuralFittedStrategy(BlackjackStrategy):
     #   Hands-on Machine Learning with Scikit-Learn, Keras & TensorFlow
     #     O'Reilly, ch18 - https://homl.info/
     _experience_buffer = deque(maxlen=1000)
+    _exploration_rate = EXPL_MAX
     _model = Sequential([
-        Dense(32, activation='elu', input_shape=[num_inputs]),
-        Dense(32, activation='elu'),  # elu [exponential linear unit] to diminish the vanishing gradient problem
-        Dense(num_outputs, activation='softmax')  # softmax to normalize outputs to probabilities that sum to 1
+        Dense(128, activation='elu', input_shape=[num_inputs]),
+        Dropout(.1),
+        Dense(32, activation='elu'),
+        Dense(num_outputs)
     ])
     _model.summary()
 
-    def __init__(self, epsilon_value=0.1, batch_size=50):
-        self._epsilon = epsilon_value
+    def __init__(self, batch_size=50):
         self._batch_size = batch_size
         if len(NeuralFittedStrategy._experience_buffer) >= self._batch_size:
             self._experience_replay()
 
     def evaluate(self, game_state: BlackjackState) -> Action:
-        if random() < self._epsilon:
-            return Action(choice(legal_move_filter(game_state)))
+        if random() < NeuralFittedStrategy._exploration_rate:
+            random_action = Action(choice(legal_move_filter(game_state)))
+            print(f"\t\tRandom selected action: {random_action}")
+            return random_action
         else:
             legal_actions = legal_move_filter(game_state)
             inputs = game_state.to_array()
-            q_values = self._model.predict(inputs[np.newaxis])
-            sorted_recommended_actions = np.argsort(q_values[0])
-            best_legal_action = [x for x in sorted_recommended_actions if x in legal_actions][-1]
-            return Action(best_legal_action)
+            q_values = self._model.predict(self.scale_state(inputs[np.newaxis]))
+            recommended_action = np.argmax(q_values[0])
+            best_legal_action = Action(recommended_action)
+            print(f"\t\tNetwork selected action: {best_legal_action}")
+            if recommended_action in legal_actions:
+                return best_legal_action
+            if best_legal_action == Action.DOUBLE_DOWN:
+                return Action.HIT
+            return Action.STAND
 
     def update_policy(self, experience: BlackjackExperience):
         reward = self.determine_reward(experience.resulting_state.hand_state, experience.bet)
         NeuralFittedStrategy._experience_buffer.append((experience, reward))
 
-    def _experience_replay(self, discount_factor=0.95, optimizer=Nadam(learning_rate=1e-2), loss_fn=mean_squared_error):
+    def _experience_replay(self, discount_factor=0.95, optimizer=Adam(learning_rate=1e-2), loss_fn=mean_absolute_error):
         if len(NeuralFittedStrategy._experience_buffer) < self._batch_size:
             print(f"Not enough experiences to sample a batch size of: {self._batch_size}")
             return
@@ -67,18 +79,21 @@ class NeuralFittedStrategy(BlackjackStrategy):
         output_states = np.array([experience.resulting_state.to_array() for experience in experiences])
         input_states = np.array([experience.last_state.to_array() for experience in experiences])
 
-        resulting_q_values = NeuralFittedStrategy._model.predict(output_states)
+        resulting_q_values = NeuralFittedStrategy._model.predict(self.scale_state(output_states))
         # TODO: mask off the legal moves
         resulting_max_q_values = np.max(resulting_q_values, axis=1)
         target_q_values = (rewards + discount_factor * resulting_max_q_values)
         target_q_values = target_q_values.reshape(-1, 1)
         mask = tf.one_hot(actions, num_outputs)
         with tf.GradientTape() as tape:
-            all_q_values = NeuralFittedStrategy._model(input_states)
+            all_q_values = NeuralFittedStrategy._model(self.scale_state(input_states))
             q_values = tf.reduce_sum(all_q_values * mask, axis=1, keepdims=True)
             loss = tf.reduce_mean(loss_fn(target_q_values, q_values))
         grads = tape.gradient(loss, NeuralFittedStrategy._model.trainable_variables)
         optimizer.apply_gradients(zip(grads, NeuralFittedStrategy._model.trainable_variables))
+
+        NeuralFittedStrategy._exploration_rate = max(
+            NeuralFittedStrategy._exploration_rate * EXPL_DECAY, EXPL_MIN)
 
     @staticmethod
     def determine_reward(hand_state, bet: int):
@@ -89,3 +104,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
         if hand_state == TerminationStates.PUSH:
             return bet / 2
         return hand_state
+
+    @staticmethod
+    def scale_state(state):
+        return state / np.array([25, 1, 11])
