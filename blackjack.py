@@ -37,6 +37,11 @@ class Program:
         print(f"\tPlayer won: {results[Winner.Player]}")
         print(f"\tPush: {results[Winner.Push]}\n")
 
+        win_percentage = 100. * float(results[Winner.Player]) / float(self.args.games_to_play)
+        print(f"Win percentage: {win_percentage:.2f}%")
+        push_percentage = 100. * float(results[Winner.Push]) / float(self.args.games_to_play)
+        print(f"Push percentage: {push_percentage:.2f}%")
+
         if self.args.game_type == 'QLearningPolicyGame':
             # q_table = qlp.get_table()
             # pprint(q_table)

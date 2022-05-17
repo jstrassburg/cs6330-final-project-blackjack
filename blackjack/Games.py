@@ -60,6 +60,7 @@ class Game(ABC):
         action = None
 
         initial_player_hand_score = self.score_hand(self._player_hand)
+        print(f"\tDealer shows: {self._dealer_show_card.face}")
         print(f"\tPlayer has {self._player_hand[0].face.name} and {self._player_hand[1].face.name} "
               f"for: {'soft ' if initial_player_hand_score[1] else ''}{initial_player_hand_score[0]}")
 

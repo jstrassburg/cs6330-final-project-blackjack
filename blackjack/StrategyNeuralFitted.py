@@ -66,15 +66,11 @@ class NeuralFittedStrategy(BlackjackStrategy):
         actions = np.array([int(experience.action) for experience in experiences])
         output_states = np.array([experience.resulting_state.to_array() for experience in experiences])
         input_states = np.array([experience.last_state.to_array() for experience in experiences])
-        is_dones = np.array([
-            TerminationStates.has_value(int(experience.resulting_state.hand_state)) for experience in experiences
-        ])
 
         resulting_q_values = NeuralFittedStrategy._model.predict(output_states)
         # TODO: mask off the legal moves
-        # TODO: perhaps remove the is_dones as the game is done when it is done
         resulting_max_q_values = np.max(resulting_q_values, axis=1)
-        target_q_values = (rewards + (1 - is_dones) * discount_factor * resulting_max_q_values)
+        target_q_values = (rewards + discount_factor * resulting_max_q_values)
         target_q_values = target_q_values.reshape(-1, 1)
         mask = tf.one_hot(actions, num_outputs)
         with tf.GradientTape() as tape:
