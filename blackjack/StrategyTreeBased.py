@@ -1,6 +1,5 @@
 from random import Random, choice, sample
 import random
-from tkinter.tix import Tree
 
 from sklearn.multioutput import MultiOutputRegressor
 from blackjack.Filters import legal_move_filter
