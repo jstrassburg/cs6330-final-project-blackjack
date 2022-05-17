@@ -1,4 +1,5 @@
 from random import random, choice, sample
+import time
 from sklearn.exceptions import NotFittedError
 
 from sklearn.multioutput import MultiOutputRegressor
@@ -9,8 +10,11 @@ from blackjack.Strategies import BlackjackExperience, BlackjackStrategy, Blackja
 from blackjack.Cards import Card, Face, Suit
 from blackjack.Policy import Action
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import SGDRegressor
 from collections import deque
 import numpy as np
+
+from functools import cache
 
 MEM_SIZE = 1000
 GAMMA = 0.95
@@ -24,9 +28,12 @@ class TreeBasedStrategy(BlackjackStrategy):
     _experience_buffer = deque(maxlen=MEM_SIZE)
     _is_fit = False
     _exploration_rate = EXPL_MAX
-    _model = MultiOutputRegressor(RandomForestRegressor())
-    _hand_state_encoder = OneHotEncoder(categories=[list(range(1,22)) + list([x.value for x in TerminationStates])], sparse=False)
-    _dealer_show_card_encoder = OneHotEncoder(categories=[list(range(2,12))], sparse=False)
+    # _model = MultiOutputRegressor(RandomForestRegressor())
+    _model = MultiOutputRegressor(SGDRegressor())
+    _hand_state_encoder = OneHotEncoder(categories=[list(
+        range(1, 22)) + list([x.value for x in TerminationStates])], sparse=False)
+    _dealer_show_card_encoder = OneHotEncoder(
+        categories=[list(range(2, 12))], sparse=False)
 
     def __init__(self, batch_size=20):
         self._batch_size = batch_size
@@ -60,24 +67,26 @@ class TreeBasedStrategy(BlackjackStrategy):
             # predict probabilites of each action from the model
             inputs = self.preprocess_state(exp.resulting_state)
             try:
-                prediction = TreeBasedStrategy._model.predict([inputs])[0]
+                resulting_state_q_values = TreeBasedStrategy._model.predict([
+                                                                            inputs])
             except NotFittedError:
-                prediction = np.array([[0, 0, 0]])
+                resulting_state_q_values = np.array([[0, 0, 0]])
 
             # calcuate the reward plus discounted Q value from the highest-valued Q
-            q_update = (exp_reward + GAMMA * np.max(prediction))
+            q_update = (exp_reward + GAMMA * np.max(resulting_state_q_values))
 
             inputs = self.preprocess_state(exp.last_state)
             try:
-                q_values = TreeBasedStrategy._model.predict([inputs])
+                last_state_q_values = TreeBasedStrategy._model.predict([
+                                                                       inputs])
             except NotFittedError:
-                q_values = np.array([[0, 0, 0]])
+                last_state_q_values = np.array([[0, 0, 0]])
 
-            q_values[0][exp.action.value] = q_update
+            last_state_q_values[0][exp.action.value] = q_update
             inputs = self.preprocess_state(exp.last_state)
             X.append(inputs)
-            targets.append(q_values[0])
-        
+            targets.append(last_state_q_values[0])
+
         TreeBasedStrategy._model.fit(X, targets)
 
         TreeBasedStrategy._exploration_rate = max(
@@ -94,14 +103,19 @@ class TreeBasedStrategy(BlackjackStrategy):
         return hand_state
 
     @staticmethod
+    @cache
     def preprocess_state(state: BlackjackState):
-        hand_state_encoded = TreeBasedStrategy._hand_state_encoder.fit_transform(np.array([int(state.hand_state)]).reshape(-1,1))
-        dealer_show_card_encoded = TreeBasedStrategy._dealer_show_card_encoder.fit_transform(np.array([int(state.dealer_show_card)]).reshape(-1,1))
-        return np.concatenate([hand_state_encoded[0], dealer_show_card_encoded[0], np.array([int(state.is_soft_hand)])])
+        hand_state_encoded = TreeBasedStrategy._hand_state_encoder.fit_transform(
+            np.array([int(state.hand_state)]).reshape(-1, 1))
+        dealer_show_card_encoded = TreeBasedStrategy._dealer_show_card_encoder.fit_transform(
+            np.array([int(state.dealer_show_card)]).reshape(-1, 1))
+        ret_val = np.concatenate(
+            [hand_state_encoded[0], dealer_show_card_encoded[0], np.array([int(state.is_soft_hand)])])
+        return ret_val
 
     @staticmethod
     def print_policy():
-        for i in range(1,22):
+        for i in range(1, 22):
             for j in list(Face):
                 for k in [True, False]:
                     state = BlackjackState(i, k, Card(j, Suit.Clubs))
@@ -111,4 +125,5 @@ class TreeBasedStrategy(BlackjackStrategy):
                     legal_actions = legal_move_filter(state)
                     best_legal_action = [
                         x for x in sorted_recommended_actions if x in legal_actions][-1]
-                    print(f"Player: {i} - Dealer: {j} - Action: {Action(best_legal_action)}")
+                    print(
+                        f"Player: {i} - Dealer: {j} - Action: {Action(best_legal_action)}")
