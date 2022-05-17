@@ -51,7 +51,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
             return Action(best_legal_action)
 
     def update_policy(self, experience: BlackjackExperience):
-        reward = self.determine_reward(experience.last_state.hand_state, experience.bet)
+        reward = self.determine_reward(experience.resulting_state.hand_state, experience.bet)
         NeuralFittedStrategy._experience_buffer.append((experience, reward))
 
     def _experience_replay(self, discount_factor=0.95, optimizer=Nadam(learning_rate=1e-2), loss_fn=mean_squared_error):
