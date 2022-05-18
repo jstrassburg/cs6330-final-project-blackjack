@@ -7,9 +7,6 @@ from random import random, choice, sample
 import numpy as np
 from collections import deque
 
-# the .python might need to be removed at runtime
-# it fixes code completion, however, due to:
-#   https://github.com/tensorflow/tensorflow/issues/53144
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential
@@ -32,12 +29,12 @@ class NeuralFittedStrategy(BlackjackStrategy):
     _experience_buffer = deque(maxlen=1000)
     _exploration_rate = EXPL_MAX
     _model = Sequential([
-        Dense(128, activation='elu', input_shape=[num_inputs]),
-        Dropout(.1),
+        Dense(32, activation='elu', input_shape=[num_inputs]),
         Dense(32, activation='elu'),
         Dense(num_outputs)
     ])
     _model.summary()
+    _model.compile(Adam(learning_rate=1e-2), mean_absolute_error)
 
     def __init__(self, batch_size=50):
         self._batch_size = batch_size
@@ -66,31 +63,27 @@ class NeuralFittedStrategy(BlackjackStrategy):
         reward = self.determine_reward(experience.resulting_state.hand_state, experience.bet)
         NeuralFittedStrategy._experience_buffer.append((experience, reward))
 
-    def _experience_replay(self, discount_factor=0.95, optimizer=Adam(learning_rate=1e-2), loss_fn=mean_absolute_error):
+    def _experience_replay(self, discount_factor=0.95):
         if len(NeuralFittedStrategy._experience_buffer) < self._batch_size:
             print(f"Not enough experiences to sample a batch size of: {self._batch_size}")
             return
+
         random_samples = sample(NeuralFittedStrategy._experience_buffer, self._batch_size)
+
         experiences = np.array([random_sample[0] for random_sample in random_samples])
         rewards = np.array([random_sample[1] for random_sample in random_samples])
 
-        # It would be nice to not loop through the experiences four times, later.
         actions = np.array([int(experience.action) for experience in experiences])
-        output_states = np.array([experience.resulting_state.to_array() for experience in experiences])
-        input_states = np.array([experience.last_state.to_array() for experience in experiences])
+        resulting_states = np.array([experience.resulting_state.to_array() for experience in experiences])
+        last_states = np.array([experience.last_state.to_array() for experience in experiences])
 
-        resulting_q_values = NeuralFittedStrategy._model.predict(self.scale_state(output_states))
-        # TODO: mask off the legal moves
+        resulting_q_values = NeuralFittedStrategy._model.predict(self.scale_state(resulting_states))
         resulting_max_q_values = np.max(resulting_q_values, axis=1)
         target_q_values = (rewards + discount_factor * resulting_max_q_values)
         target_q_values = target_q_values.reshape(-1, 1)
         mask = tf.one_hot(actions, num_outputs)
-        with tf.GradientTape() as tape:
-            all_q_values = NeuralFittedStrategy._model(self.scale_state(input_states))
-            q_values = tf.reduce_sum(all_q_values * mask, axis=1, keepdims=True)
-            loss = tf.reduce_mean(loss_fn(target_q_values, q_values))
-        grads = tape.gradient(loss, NeuralFittedStrategy._model.trainable_variables)
-        optimizer.apply_gradients(zip(grads, NeuralFittedStrategy._model.trainable_variables))
+        new_q_values = target_q_values * mask
+        NeuralFittedStrategy._model.fit(self.scale_state(last_states), new_q_values, verbose=0)
 
         NeuralFittedStrategy._exploration_rate = max(
             NeuralFittedStrategy._exploration_rate * EXPL_DECAY, EXPL_MIN)
