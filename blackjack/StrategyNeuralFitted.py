@@ -18,8 +18,8 @@ num_inputs = len(BlackjackState(0, False, Card(Face.Ace, Suit.Clubs)).__dict__)
 num_outputs = len(Action)
 
 EXPL_MAX = 1.0
-EXPL_MIN = 0.05
-EXPL_DECAY = 0.96
+EXPL_MIN = 0.02
+EXPL_DECAY = 0.99
 
 
 class NeuralFittedStrategy(BlackjackStrategy):
@@ -33,8 +33,7 @@ class NeuralFittedStrategy(BlackjackStrategy):
         Dense(32, activation='elu'),
         Dense(num_outputs)
     ])
-    _model.summary()
-    _model.compile(Adam(learning_rate=1e-2), mean_absolute_error)
+    _model.compile(Adam(learning_rate=1e-3), mean_absolute_error)
 
     def __init__(self, batch_size=50):
         self._batch_size = batch_size
@@ -101,3 +100,24 @@ class NeuralFittedStrategy(BlackjackStrategy):
     @staticmethod
     def scale_state(state):
         return state / np.array([25, 1, 11])
+
+    @staticmethod
+    def print_policy():
+        for i in range(4, 22):
+            for j in list(Face):
+                for is_soft in [True, False]:
+                    if is_soft and (11 < i < 18):
+                        continue
+                    state = BlackjackState(i, is_soft, Card(j, Suit.Clubs))
+                    inputs = NeuralFittedStrategy.scale_state(state.to_array())
+                    q_values = NeuralFittedStrategy._model.predict(inputs[np.newaxis, :])
+                    legal_actions = legal_move_filter(state)
+                    recommended_action = np.argmax(q_values[0])
+                    best_legal_action = Action(recommended_action)
+                    if int(best_legal_action) not in legal_actions:
+                        if best_legal_action == Action.DOUBLE_DOWN:
+                            best_legal_action = Action.HIT
+                        else:
+                            best_legal_action = Action.STAND
+                    print(
+                        f"Player: {'soft ' if is_soft else ''}{i} - Dealer: {j} - Action: {best_legal_action}")

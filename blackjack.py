@@ -3,6 +3,7 @@ from blackjack.Strategies import qlp
 from pprint import pprint
 
 from blackjack.StrategyTreeBased import TreeBasedStrategy
+from blackjack.StrategyNeuralFitted import NeuralFittedStrategy
 
 
 class Program:
@@ -49,10 +50,15 @@ class Program:
             # pprint(q_table)
             for state in range(2, 22):
                 print(f"state: {state} - best action: {qlp.best_action(state)}")
+        elif self.args.game_type == 'NeuralFittedPolicyGame':
+            NeuralFittedStrategy.print_policy()
         # elif self.args.game_type == 'TreeBasedPolicyGame':
         #     TreeBasedStrategy.print_policy()
 
         csv.close()
+
+    def dump_policy(self, model):
+        pass
 
     def add_arguments_and_parse(self):
         self.parser.add_argument('--games', dest='games_to_play', default=1000, type=int,
